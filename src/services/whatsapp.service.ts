@@ -6,7 +6,7 @@ import {
   handleMessagesUpsert,
 } from '../handlers/whatsapp.handlers';
 import { WHATSAPP_CONFIG } from '../config/whatsapp.config';
-import { handleMessagesUpsertFiles } from '../handlers/messageProcessor.handlers';
+import { handleMessagesUpsertFiles } from '../handlers/message.handlers';
 
 const makeWASocket = baileys.makeWASocket;
 const { useMultiFileAuthState } = baileys;
