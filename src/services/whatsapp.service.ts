@@ -3,10 +3,9 @@ import * as baileys from '@whiskeysockets/baileys';
 import type { WhatsappSocket } from '../types';
 import {
   handleConnectionUpdate,
-  handleMessagesUpsert,
 } from '../handlers/whatsapp.handlers';
 import { WHATSAPP_CONFIG } from '../config/whatsapp.config';
-import { handleMessagesUpsertFiles } from '../handlers/message.handlers';
+import { handleMessagesUpsert } from '../handlers/message.handlers';
 
 const makeWASocket = baileys.makeWASocket;
 const { useMultiFileAuthState } = baileys;
@@ -37,8 +36,6 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
   sock.ev.on('creds.update', saveCreds);
   sock.ev.on('messages.upsert', async (messages) => {
     await handleMessagesUpsert({ sock, ...messages });
-    await handleMessagesUpsertFiles({ sock, ...messages });
-
   });
 
   return sock;
