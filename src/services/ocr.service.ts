@@ -94,28 +94,26 @@ async function processTesseractImage(imagePath: string, options?: OCROptions): P
     const result = await worker.recognize(imagePath);
 
     const extractedText = result.data.text.trim();
-
-    if (extractedText) {
-      const lines = extractedText.split('\n').filter(line => line.trim().length > 0);
-      const mockLines = lines.map(line => ({ LineText: line }));
-
-      return {
-        OCRExitCode: 1,
-        IsErroredOnProcessing: false,
-        ParsedResults: [{
-          TextOverlay: {
-            Lines: mockLines
-          },
-          ParsedText: extractedText
-        }]
-      };
-    } else {
-      return {
-        OCRExitCode: 0,
-        IsErroredOnProcessing: true,
-        ErrorMessage: 'Nenhum texto foi encontrado na imagem'
-      };
+    if (!extractedText) return {
+      OCRExitCode: 0,
+      IsErroredOnProcessing: true,
+      ErrorMessage: 'Nenhum texto foi encontrado na imagem'
     }
+
+    const lines = extractedText.split('\n').filter(line => line.trim().length > 0);
+    const mockLines = lines.map(line => ({ LineText: line }));
+
+    return {
+      OCRExitCode: 1,
+      IsErroredOnProcessing: false,
+      ParsedResults: [{
+        TextOverlay: {
+          Lines: mockLines
+        },
+        ParsedText: extractedText
+      }]
+    };
+
   } finally {
     await worker.terminate();
   }

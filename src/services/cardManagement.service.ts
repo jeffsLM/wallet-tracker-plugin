@@ -8,7 +8,6 @@ interface CardData {
   id: string;
   purchaseType: string;
   amount: string;
-  payment: string;
   parcelas: number;
   lastFourDigits: string;
   user: string;
@@ -40,7 +39,6 @@ interface CardListResult {
 interface CardEditOptions {
   purchaseType?: string;
   amount?: string;
-  payment?: string;
   parcelas?: number;
 }
 
@@ -50,7 +48,7 @@ const CARDS_CONFIG = {
   pendingFile: 'pending_cards.json',
   confirmedFile: 'confirmed_cards.json',
   maxPendingHours: 24,
-  editableFields: ['purchaseType', 'amount', 'payment', 'parcelas'] as const
+  editableFields: ['purchaseType', 'amount', 'parcelas'] as const
 } as const;
 
 // Internal storage
@@ -109,7 +107,6 @@ function saveCardsToDisk(): void {
 async function createPendingCard(data: {
   purchaseType: string;
   amount: string;
-  payment: string;
   parcelas: number;
   lastFourDigits: string;
   user: string;
@@ -125,7 +122,6 @@ async function createPendingCard(data: {
       id: cardId,
       purchaseType: data.purchaseType,
       amount: data.amount,
-      payment: data.payment,
       parcelas: data.parcelas,
       lastFourDigits: data.lastFourDigits,
       user: data.user,
@@ -187,9 +183,6 @@ async function editPendingCard(cardId: string, updates: CardEditOptions): Promis
     if (updates.amount !== undefined) {
       card.amount = updates.amount;
     }
-    if (updates.payment !== undefined) {
-      card.payment = updates.payment;
-    }
     if (updates.parcelas !== undefined) {
       card.parcelas = updates.parcelas;
     }
@@ -229,7 +222,6 @@ async function confirmCard(cardId: string): Promise<CardResult> {
       id: pendingCard.id,
       purchaseType: pendingCard.purchaseType,
       amount: pendingCard.amount,
-      payment: pendingCard.payment,
       parcelas: pendingCard.parcelas,
       lastFourDigits: pendingCard.lastFourDigits,
       user: pendingCard.user,
@@ -369,7 +361,7 @@ function cleanupExpiredCards(): void {
 function formatCardInfo(card: CardData | PendingCard): string {
   return `
 💰 Valor: ${card.amount}
-💳 Pagamento: ${card.payment.toUpperCase()}
+💳 Pagamento: ${card.purchaseType.toUpperCase()}
 🔢 Parcelas: ${card.parcelas}
 📝 Status: ${card.status === 'pending' ? '🟡 Pendente' : '✅ Confirmado'}
   `.trim();

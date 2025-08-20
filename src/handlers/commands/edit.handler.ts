@@ -31,19 +31,18 @@ export const editHandler = {
 
       const result = await cardManagementService.editPendingCard(pendingCard.id, editCommand.updates);
 
-      if (result.success) {
-        await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
-          text: messageFormatter.createEditSuccessMessage(result.card!),
-          ...(msg.message ? { quoted: msg.message } : {})
-        });
-      } else {
-        await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
-          text: messageFormatter.createErrorMessage('ERRO AO EDITAR', result.error, 'Verifique o formato e tente novamente.'),
-          ...(msg.message ? { quoted: msg.message } : {})
-        });
-      }
+      if (!result.success) return await whatsappMessage.sendText(sock, {
+        jid: msg.key.remoteJid || '',
+        text: messageFormatter.createErrorMessage('ERRO AO EDITAR', result.error, 'Verifique o formato e tente novamente.'),
+        ...(msg.message ? { quoted: msg.message } : {})
+      });
+
+      return await whatsappMessage.sendText(sock, {
+        jid: msg.key.remoteJid || '',
+        text: messageFormatter.createEditSuccessMessage(result.card!),
+        ...(msg.message ? { quoted: msg.message } : {})
+      });
+
     } catch (error) {
       console.error('Erro ao editar comprovante:', error);
       await whatsappMessage.sendText(sock, {

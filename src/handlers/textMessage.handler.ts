@@ -18,7 +18,7 @@ export const textMessageHandler = {
     const lowerText = text.toLowerCase().trim();
 
     // Route to appropriate command handler
-    if (lowerText.includes('1')) {
+    if (lowerText.startsWith('1')) {
       await confirmationHandler.handle(senderJid, sock, msg);
       return;
     }
@@ -28,12 +28,12 @@ export const textMessageHandler = {
       return;
     }
 
-    if (lowerText.includes('2')) {
+    if (lowerText.startsWith('2')) {
       await cancelHandler.handle(senderJid, sock, msg);
       return;
     }
 
-    if (lowerText.includes('status') || lowerText.includes('meus cartoes')) {
+    if (lowerText.startsWith('status') || lowerText.startsWith('meus cartoes')) {
       await statusHandler.handle(senderJid, sock, msg);
       return;
     }

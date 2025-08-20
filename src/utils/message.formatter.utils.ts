@@ -75,7 +75,6 @@ ${cardManagementService.formatCardInfo(card)}
     const FIELD_COMMANDS = {
       'tipo': 'purchaseType',
       'valor': 'amount',
-      'pagamento': 'payment',
       'parcelas': 'parcelas'
     } as const;
 
@@ -89,7 +88,6 @@ _"3 [campo] [novo valor]"_
 *Exemplos:*
 • \`3 tipo Crédito\`
 • \`3 valor R$ 250,00\`
-• \`3 pagamento Parcelado\`
 • \`3 parcelas 6\`
 
 ━━━━━━━━━━━━━━━━

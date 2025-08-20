@@ -99,7 +99,6 @@ export const imageMessageHandler = {
     const result = await cardManagementService.createPendingCard({
       purchaseType: cardInfo.type || 'Não identificado',
       amount: cardInfo.amount || 'Não identificado',
-      payment: cardInfo.type || 'Não identificado',
       parcelas: cardInfo.installments,
       lastFourDigits: cardInfo.lastFourDigits || 'Não identificado',
       user: senderName,
