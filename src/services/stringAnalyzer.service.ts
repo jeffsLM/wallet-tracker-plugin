@@ -51,10 +51,9 @@ const cardPatterns: CardPattern[] = [
   // Padrões para débito
   {
     keywords: [
-      'debito', 'débito', 'debit', 'a vista', 'à vista', 'avista',
+      'debito', 'débito', 'debit', 'conprovante debito',
       'mastercard debit', 'visa debit', 'elo debit', 'cartao debito',
       'cartão débito', 'senha digitada', 'comprovante debito',
-      'conprovante debito'
     ],
     type: 'debito',
     weight: 2
@@ -305,7 +304,8 @@ function extractAmount(text: string): string {
     /(?:total|valor|importo|amount)[\s:]*r\$?\s*(\d{1,3}(?:\.\d{3})*,\d{2})/gi,
     /r\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})/gi,
     /(\d{1,3}(?:\.\d{3})*,\d{2})\s*reais?/gi,
-    /(\d{1,3}(?:\.\d{3})*,\d{2})(?=\s|$)/g
+    /(\d{1,3}(?:\.\d{3})*,\d{2})(?=\s|$)/g,
+    /(\d+,\d{1})(?!\d)/g
   ];
 
   for (const pattern of patterns) {

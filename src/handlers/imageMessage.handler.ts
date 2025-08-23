@@ -108,19 +108,18 @@ export const imageMessageHandler = {
       filePath: downloadResult.filePath
     });
 
-    if (result.success && result.card) {
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: messageFormatter.createProcessedCardMessage(result.card),
-        ...(msg.message ? { quoted: msg.message } : {})
-      });
-    } else {
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: messageFormatter.createErrorMessage('ERRO AO CRIAR COMPROVANTE', result.error, 'Tente processar a imagem novamente.'),
-        ...(msg.message ? { quoted: msg.message } : {})
-      });
-    }
+    if (!result.success) await whatsappMessage.sendText(sock, {
+      jid: msg.key.remoteJid || '',
+      text: messageFormatter.createErrorMessage('ERRO AO CRIAR COMPROVANTE', result.error, 'Tente processar a imagem novamente.'),
+      ...(msg.message ? { quoted: msg.message } : {})
+    });
+
+    await whatsappMessage.sendText(sock, {
+      jid: msg.key.remoteJid || '',
+      text: messageFormatter.createProcessedCardMessage(result.card),
+      ...(msg.message ? { quoted: msg.message } : {})
+    });
+
 
     await imageDownloadService.cleanupOldImages();
   }
