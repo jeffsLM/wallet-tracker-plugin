@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "whatsapp-processor",
       script: "dist/index.js",
-      cwd: "C:/source/whatsapp-processor",
+      cwd: "/home/ec2-user/whatsapp-processor",
       instances: 1,
       autorestart: true,
       watch: false,
