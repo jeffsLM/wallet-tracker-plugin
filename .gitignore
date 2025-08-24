@@ -1,5 +1,6 @@
 /auth
 /auth_info_baileys
+/auth-state
 /node_modules
 
 .env

@@ -3,9 +3,11 @@ import * as baileys from '@whiskeysockets/baileys';
 import type { WhatsappSocket } from '../types';
 import {
   handleConnectionUpdate,
+  handleMessagesToSend,
 } from '../handlers/whatsapp.handlers';
 import { WHATSAPP_CONFIG } from '../config/whatsapp.config';
 import { handleMessagesUpsert } from '../handlers/message.handlers';
+import { handleMessagesToSendFromQueue } from './rabbitMQ.service';
 
 const makeWASocket = baileys.makeWASocket;
 const { useMultiFileAuthState } = baileys;
@@ -24,13 +26,14 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
   });
 
   sock.ev.on('connection.update', (update) => {
-    handleConnectionUpdate(
-      update,
-      () => connectToWhatsApp(),
-      async () => {
-        console.log('Número conectado:', sock.user?.id);
+    handleConnectionUpdate({ update, reconnectCallback: () => connectToWhatsApp() });
+
+    handleMessagesToSendFromQueue({
+      connectionUpdate: update,
+      callback: async (messageData) => {
+        await handleMessagesToSend(messageData, sock, update);
       }
-    );
+    });
   });
 
   sock.ev.on('creds.update', saveCreds);

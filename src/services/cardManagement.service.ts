@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { publishFromWhatsApp } from './rabbitMQ.service';
 
 // Interfaces
 interface CardData {
@@ -233,8 +234,9 @@ async function confirmCard(cardId: string): Promise<CardResult> {
     // Remove from pending and add to confirmed
     pendingCards.delete(cardId);
     confirmedCards.push(confirmedCard);
-    saveCardsToDisk();
+    await publishFromWhatsApp(confirmedCard);
 
+    saveCardsToDisk();
     console.log(`✅ Cartão confirmado - ID: ${cardId.substring(0, 8)} - Usuário: ${confirmedCard.user}`);
 
     return {

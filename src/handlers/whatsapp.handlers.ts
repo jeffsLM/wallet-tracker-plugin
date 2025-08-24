@@ -1,22 +1,29 @@
 import type {
   ConnectionUpdate,
-  MessagesUpsert,
   WhatsappSocket,
 } from '../types';
 import { Boom } from '@hapi/boom';
 import { DisconnectReason } from '@whiskeysockets/baileys';
 import { generateQRCode } from '../utils/whatsapp.utils';
+import { whatsappMessage } from '../services/whatappMessage.service';
 
-export function handleConnectionUpdate(
+import dotenv from 'dotenv';
+dotenv.config();
+
+interface IWhatsAppHandlers {
+
   update: ConnectionUpdate,
   reconnectCallback: () => void,
-  onOpenCallback: (sock: WhatsappSocket) => Promise<void>
-): void {
+}
+
+export function handleConnectionUpdate({ update, reconnectCallback }: IWhatsAppHandlers): void {
   if (update.qr) {
     generateQRCode(update.qr);
   }
 
   const { connection, lastDisconnect } = update;
+
+  if (connection === 'open') return console.log('✅ Conectado ao WhatsApp!');
 
   if (connection === 'close') {
     const shouldReconnect =
@@ -26,8 +33,10 @@ export function handleConnectionUpdate(
     console.log('Conexão fechada:', lastDisconnect?.error, ', reconectando:', shouldReconnect);
     if (shouldReconnect) reconnectCallback();
   }
-
-  if (connection === 'open') {
-    console.log('✅ Conectado ao WhatsApp!');
-  }
 }
+
+export const handleMessagesToSend = async (message: string, sock: WhatsappSocket, connectionUpdate: ConnectionUpdate) => {
+  if (connectionUpdate.connection !== 'open') return;
+
+  await whatsappMessage.sendText(sock, { text: message, jid: process.env.TARGET_GROUP_ID || '' });
+};

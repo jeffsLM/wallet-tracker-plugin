@@ -5,6 +5,7 @@ async function main(): Promise<void> {
     console.log('🔄 Iniciando conexão com WhatsApp...');
     await connectToWhatsApp();
 
+
     process.on('SIGINT', () => {
       console.log('\n👋 Saindo...');
       process.exit(0);
