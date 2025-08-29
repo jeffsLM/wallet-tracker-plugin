@@ -217,6 +217,15 @@ async function confirmCard(cardId: string): Promise<CardResult> {
         error: 'Cartão pendente não encontrado'
       };
     }
+    const noHasAmount = pendingCard?.amount
+      ?.normalize('NFD')
+      ?.replace(/[\u0300-\u036f]/g, '')
+      ?.toLowerCase() === 'nao identificado';
+
+    if (noHasAmount) return {
+      success: false,
+      error: 'Valor do cartão não identificado, edite antes de confirmar'
+    };
 
     // Convert to confirmed card
     const confirmedCard: CardData = {
