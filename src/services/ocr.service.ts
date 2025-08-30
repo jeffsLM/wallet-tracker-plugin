@@ -1,13 +1,7 @@
-import Tesseract from 'tesseract.js';
 import fs from 'fs';
-
-const OCR_CONFIG = {
-  defaultLanguage: 'por',
-  recognizeOptions: {
-    tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-    preserve_interword_spaces: '1'
-  }
-} as const;
+import axios from 'axios';
+import { VISION_CONFIG } from '../config/googleVision.config';
+const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY || 'SUA_API_KEY_AQUI';
 
 // Interfaces - mantidas exatamente iguais
 interface OCRResponse {
@@ -38,6 +32,23 @@ interface OCROptions {
   detectOrientation?: boolean;
   isTable?: boolean;
   scale?: boolean;
+}
+
+interface GoogleVisionResponse {
+  responses: Array<{
+    textAnnotations?: Array<{
+      description: string;
+      boundingPoly: any;
+    }>;
+    fullTextAnnotation?: {
+      text: string;
+      pages: any[];
+    };
+    error?: {
+      code: number;
+      message: string;
+    };
+  }>;
 }
 
 function parseResponse(response: OCRResponse): OCRResult {
@@ -85,22 +96,90 @@ function validateImagePath(imagePath: string): boolean {
   }
 }
 
-async function processTesseractImage(imagePath: string, options?: OCROptions): Promise<OCRResponse> {
-  const language = options?.language || OCR_CONFIG.defaultLanguage;
+function mapLanguageCode(language?: string): string[] {
+  const languageMap: Record<string, string[]> = {
+    'por': ['pt'],
+    'pt': ['pt'],
+    'eng': ['en'],
+    'en': ['en'],
+    'spa': ['es'],
+    'es': ['es'],
+    'fra': ['fr'],
+    'fr': ['fr']
+  };
 
-  const worker = await Tesseract.createWorker(language, 1);
+  return languageMap[language || 'por'] || ['pt', 'en'];
+}
 
+async function processGoogleVisionImage(imagePath: string, options?: OCROptions): Promise<OCRResponse> {
   try {
-    const result = await worker.recognize(imagePath);
+    const languageHints = mapLanguageCode(options?.language);
 
-    const extractedText = result.data.text.trim();
-    if (!extractedText) return {
-      OCRExitCode: 0,
-      IsErroredOnProcessing: true,
-      ErrorMessage: 'Nenhum texto foi encontrado na imagem'
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+
+    const requestBody = {
+      requests: [
+        {
+          image: {
+            content: base64Image
+          },
+          features: [
+            {
+              type: 'TEXT_DETECTION',
+              maxResults: 1
+            }
+          ],
+          imageContext: {
+            languageHints
+          }
+        }
+      ]
+    };
+
+    const response = await axios.post(
+      `${VISION_CONFIG.apiUrl}?key=${GOOGLE_VISION_API_KEY}`,
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000 // 30 segundos timeout
+      }
+    );
+
+    const result: GoogleVisionResponse = response.data;
+    const visionResult = result.responses[0];
+
+    if (visionResult.error) {
+      return {
+        OCRExitCode: 0,
+        IsErroredOnProcessing: true,
+        ErrorMessage: visionResult.error.message || 'Erro na Google Vision API'
+      };
     }
 
-    const lines = extractedText.split('\n').filter(line => line.trim().length > 0);
+    const textAnnotations = visionResult.textAnnotations;
+
+    if (!textAnnotations || textAnnotations.length === 0) {
+      return {
+        OCRExitCode: 0,
+        IsErroredOnProcessing: true,
+        ErrorMessage: 'Nenhum texto foi encontrado na imagem'
+      };
+    }
+
+    const fullText = textAnnotations[0]?.description?.trim() || '';
+
+    if (!fullText) {
+      return {
+        OCRExitCode: 0,
+        IsErroredOnProcessing: true,
+        ErrorMessage: 'Nenhum texto foi encontrado na imagem'
+      };
+    }
+
+    const lines = fullText.split('\n').filter(line => line.trim().length > 0);
     const mockLines = lines.map(line => ({ LineText: line }));
 
     return {
@@ -110,12 +189,26 @@ async function processTesseractImage(imagePath: string, options?: OCROptions): P
         TextOverlay: {
           Lines: mockLines
         },
-        ParsedText: extractedText
+        ParsedText: fullText
       }]
     };
 
-  } finally {
-    await worker.terminate();
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.error?.message || error.message;
+      return {
+        OCRExitCode: 0,
+        IsErroredOnProcessing: true,
+        ErrorMessage: `Erro HTTP ${status}: ${message}`
+      };
+    }
+
+    return {
+      OCRExitCode: 0,
+      IsErroredOnProcessing: true,
+      ErrorMessage: error instanceof Error ? error.message : 'Erro desconhecido na Google Vision API'
+    };
   }
 }
 
@@ -123,7 +216,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
   const startTime = Date.now();
 
   try {
-    console.log(`🔍 Iniciando OCR para: ${imagePath}`);
+    console.log(`🔍 Iniciando OCR com Google Vision para: ${imagePath}`);
     if (!validateImagePath(imagePath)) {
       return {
         success: false,
@@ -131,7 +224,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
       };
     }
 
-    const response = await processTesseractImage(imagePath, options);
+    const response = await processGoogleVisionImage(imagePath, options);
     const result = parseResponse(response);
     const processingTime = Date.now() - startTime;
 
@@ -150,7 +243,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
   } catch (error) {
     const processingTime = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error(`❌ Erro ao conectar com OCR.space (${processingTime}ms):`, errorMessage);
+    console.error(`❌ Erro ao conectar com Google Vision API (${processingTime}ms):`, errorMessage);
 
     return {
       success: false,
@@ -162,7 +255,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
 
 // Função para processar múltiplas imagens
 export async function processMultipleImages(imagePaths: string[], options?: OCROptions): Promise<OCRResult[]> {
-  console.log(`🔍 Processando ${imagePaths.length} imagens...`);
+  console.log(`🔍 Processando ${imagePaths.length} imagens com Google Vision...`);
 
   const results: OCRResult[] = [];
 
@@ -173,8 +266,9 @@ export async function processMultipleImages(imagePaths: string[], options?: OCRO
     const result = await processImage(imagePath, options);
     results.push(result);
 
+    // Pequeno delay para evitar rate limiting (Google Vision tem limites mais altos que Tesseract)
     if (i < imagePaths.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 
@@ -184,8 +278,124 @@ export async function processMultipleImages(imagePaths: string[], options?: OCRO
   return results;
 }
 
-// Objeto com as funções do serviço de OCR
+// Função adicional para OCR com detecção de documentos (mais precisa para textos estruturados)
+export async function processDocumentImage(imagePath: string, options?: OCROptions): Promise<OCRResult> {
+  const startTime = Date.now();
+
+  try {
+    console.log(`🔍 Iniciando OCR de documento com Google Vision para: ${imagePath}`);
+    if (!validateImagePath(imagePath)) {
+      return {
+        success: false,
+        error: 'Arquivo de imagem não encontrado ou inválido'
+      };
+    }
+
+    if (!GOOGLE_VISION_API_KEY || GOOGLE_VISION_API_KEY === 'SUA_API_KEY_AQUI') {
+      return {
+        success: false,
+        error: 'Google Vision API Key não configurada. Defina GOOGLE_VISION_API_KEY como variável de ambiente.'
+      };
+    }
+
+    const languageHints = mapLanguageCode(options?.language);
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64Image = imageBuffer.toString('base64');
+
+    const requestBody = {
+      requests: [
+        {
+          image: {
+            content: base64Image
+          },
+          features: [
+            {
+              type: 'DOCUMENT_TEXT_DETECTION',
+              maxResults: 1
+            }
+          ],
+          imageContext: {
+            languageHints
+          }
+        }
+      ]
+    };
+
+    const response = await axios.post(
+      `${VISION_CONFIG.apiUrl}?key=${GOOGLE_VISION_API_KEY}`,
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000 // 30 segundos timeout
+      }
+    );
+
+    const result: GoogleVisionResponse = response.data;
+    const visionResult = result.responses[0];
+
+    if (visionResult.error) {
+      throw new Error(visionResult.error.message || 'Erro na Google Vision API');
+    }
+
+    const fullTextAnnotation = visionResult.fullTextAnnotation;
+
+    if (!fullTextAnnotation || !fullTextAnnotation.text) {
+      return {
+        success: false,
+        error: 'Nenhum texto foi encontrado na imagem'
+      };
+    }
+
+    const extractedText = fullTextAnnotation.text.trim();
+    const processingTime = Date.now() - startTime;
+
+    const pages = fullTextAnnotation.pages || [];
+    const blocks = pages.reduce((acc, page) => acc + (page.blocks?.length || 0), 0);
+    const confidence = blocks > 5 ? 0.95 : blocks > 2 ? 0.8 : 0.6;
+
+    console.log(`✅ OCR de documento processado com sucesso em ${processingTime}ms`);
+    console.log(`📊 Confiança: ${(confidence * 100).toFixed(1)}%`);
+    console.log(`📝 Texto extraído: ${extractedText.length} caracteres`);
+
+    return {
+      success: true,
+      text: extractedText,
+      confidence,
+      processingTime
+    };
+
+  } catch (error) {
+    const processingTime = Date.now() - startTime;
+
+    // Tratar erros do axios
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.error?.message || error.message;
+      const errorMessage = `Erro HTTP ${status}: ${message}`;
+      console.error(`❌ Erro ao processar documento (${processingTime}ms):`, errorMessage);
+
+      return {
+        success: false,
+        error: `Erro de conexão: ${errorMessage}`,
+        processingTime
+      };
+    }
+
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    console.error(`❌ Erro ao processar documento (${processingTime}ms):`, errorMessage);
+
+    return {
+      success: false,
+      error: `Erro de conexão: ${errorMessage}`,
+      processingTime
+    };
+  }
+}
+
 export const ocrService = {
   processImage,
   processMultipleImages,
+  processDocumentImage,
 };

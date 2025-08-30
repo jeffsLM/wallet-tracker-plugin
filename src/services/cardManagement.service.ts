@@ -217,12 +217,10 @@ async function confirmCard(cardId: string): Promise<CardResult> {
         error: 'Cartão pendente não encontrado'
       };
     }
-    const noHasAmount = pendingCard?.amount
-      ?.normalize('NFD')
-      ?.replace(/[\u0300-\u036f]/g, '')
-      ?.toLowerCase() === 'nao identificado';
 
-    if (noHasAmount) return {
+    const hasNumber = /\d/.test(pendingCard?.amount);
+
+    if (!hasNumber) return {
       success: false,
       error: 'Valor do cartão não identificado, edite antes de confirmar'
     };
@@ -374,6 +372,7 @@ function formatCardInfo(card: CardData | PendingCard): string {
 💰 Valor: ${card.amount}
 💳 Pagamento: ${card.purchaseType.toUpperCase()}
 🔢 Parcelas: ${card.parcelas}
+💳 Final cartão usado: ${card.lastFourDigits}
 📝 Status: ${card.status === 'pending' ? '🟡 Pendente' : '✅ Confirmado'}
   `.trim();
 }
@@ -408,7 +407,6 @@ setInterval(() => {
   cleanupExpiredCards();
 }, 60 * 60 * 1000);
 
-// Export service object
 export const cardManagementService = {
   createPendingCard,
   getPendingCardByUser,
@@ -424,6 +422,5 @@ export const cardManagementService = {
   getStats
 };
 
-// Export types and constants
 export { CardData, PendingCard, CardResult, CardListResult, CardEditOptions };
 export const EDITABLE_FIELDS = CARDS_CONFIG.editableFields;

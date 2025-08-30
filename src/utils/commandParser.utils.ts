@@ -1,7 +1,8 @@
 const FIELD_COMMANDS = {
   'tipo': 'purchaseType',
   'valor': 'amount',
-  'parcelas': 'parcelas'
+  'parcelas': 'parcelas',
+  'final': 'lastFourDigits'
 } as const;
 
 interface EditCommand {
