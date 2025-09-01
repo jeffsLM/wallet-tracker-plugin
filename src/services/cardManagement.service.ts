@@ -243,8 +243,7 @@ async function confirmCard(cardId: string): Promise<CardResult> {
 
     await qstashService.sendMessage({
       ...confirmedCard,
-      lastFourDigits: confirmedCard.lastFourDigits.toString(),
-      status: 'CONFIRMADO'
+      status: confirmedCard.status.toUpperCase()
     });
 
     saveCardsToDisk();
