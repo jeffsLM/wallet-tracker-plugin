@@ -1,4 +1,3 @@
-// whatsappMessage.service.ts
 import { WASocket, proto } from '@whiskeysockets/baileys';
 
 interface WhatsAppMessageData {

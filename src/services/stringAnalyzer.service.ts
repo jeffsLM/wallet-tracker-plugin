@@ -1,4 +1,3 @@
-// cardAnalyzer.service.ts
 import Fuse from 'fuse.js';
 
 interface CardInfo {

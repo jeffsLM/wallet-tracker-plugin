@@ -1,10 +1,8 @@
-// services/cardManagement.service.ts
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { publishFromWhatsApp } from './rabbitMQ.service';
+import { qstashService } from './qstash.service';
 
-// Interfaces
 interface CardData {
   id: string;
   purchaseType: string;
@@ -224,13 +222,14 @@ async function confirmCard(cardId: string): Promise<CardResult> {
       success: false,
       error: 'Valor do cartão não identificado, edite antes de confirmar'
     };
+    const purchaseTypes = ['credito', 'debito', 'alimentacao', 'voucher', 'refeicao'].includes(pendingCard.purchaseType);
 
     // Convert to confirmed card
     const confirmedCard: CardData = {
       id: pendingCard.id,
-      purchaseType: pendingCard.purchaseType,
+      purchaseType: purchaseTypes ? 'CREDITO' : pendingCard.purchaseType.toUpperCase(),
       amount: pendingCard.amount,
-      parcelas: pendingCard.parcelas,
+      parcelas: pendingCard.parcelas > 12 ? 12 : pendingCard.parcelas,
       lastFourDigits: pendingCard.lastFourDigits,
       user: pendingCard.user,
       ocrText: pendingCard.ocrText,
@@ -241,7 +240,12 @@ async function confirmCard(cardId: string): Promise<CardResult> {
     // Remove from pending and add to confirmed
     pendingCards.delete(cardId);
     confirmedCards.push(confirmedCard);
-    await publishFromWhatsApp(confirmedCard);
+
+    await qstashService.sendMessage({
+      ...confirmedCard,
+      lastFourDigits: confirmedCard.lastFourDigits.toString(),
+      status: 'CONFIRMADO'
+    });
 
     saveCardsToDisk();
     console.log(`✅ Cartão confirmado - ID: ${cardId.substring(0, 8)} - Usuário: ${confirmedCard.user}`);
