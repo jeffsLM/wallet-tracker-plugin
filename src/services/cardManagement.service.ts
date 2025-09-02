@@ -222,12 +222,12 @@ async function confirmCard(cardId: string): Promise<CardResult> {
       success: false,
       error: 'Valor do cartão não identificado, edite antes de confirmar'
     };
-    const purchaseTypes = ['credito', 'debito', 'alimentacao', 'voucher', 'refeicao'].includes(pendingCard.purchaseType);
+    const hasPurchaseTypes = ['credito', 'debito', 'alimentacao', 'voucher', 'refeicao'].includes(pendingCard.purchaseType);
 
     // Convert to confirmed card
     const confirmedCard: CardData = {
       id: pendingCard.id,
-      purchaseType: purchaseTypes ? 'CREDITO' : pendingCard.purchaseType.toUpperCase(),
+      purchaseType: !hasPurchaseTypes ? 'CREDITO' : pendingCard.purchaseType.toUpperCase(),
       amount: pendingCard.amount,
       parcelas: pendingCard.parcelas > 12 ? 12 : pendingCard.parcelas,
       lastFourDigits: pendingCard.lastFourDigits,
