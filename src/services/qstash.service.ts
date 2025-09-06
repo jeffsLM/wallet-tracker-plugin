@@ -24,7 +24,7 @@ export async function sendMessage(payload: any): Promise<QStashResult> {
     console.log(`🔐 Auth configurado: ${API_TOKEN ? 'Sim' : 'Não'}`);
 
     await client.publish({
-      body: { ...payload },
+      body: JSON.stringify({ ...payload }),
       headers: {
         'Content-Type': 'application/json'
       },
