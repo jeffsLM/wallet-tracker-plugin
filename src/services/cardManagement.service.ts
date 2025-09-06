@@ -50,6 +50,7 @@ const CARDS_CONFIG = {
   pendingFile: 'pending_cards.json',
   confirmedFile: 'confirmed_cards.json',
   maxPendingHours: 24,
+  maxConfirmedHours: 120,
   editableFields: ['purchaseType', 'amount', 'parcelas'] as const
 } as const;
 
@@ -363,19 +364,38 @@ function getCardsByUser(usuario: string): CardListResult {
 
 function cleanupExpiredCards(): void {
   try {
-    const cutoffTime = Date.now() - (CARDS_CONFIG.maxPendingHours * 60 * 60 * 1000);
-    let removedCount = 0;
+    const pendingCutoffTime = Date.now() - (CARDS_CONFIG.maxPendingHours * 60 * 60 * 1000); // 24 horas para pendentes
+    const confirmedCutoffTime = Date.now() - (CARDS_CONFIG.maxConfirmedHours * 60 * 60 * 1000); // 120 horas para confirmados
 
+    let removedPendingCount = 0;
+    let removedConfirmedCount = 0;
+
+    // Limpar cartões pendentes expirados (24 horas)
     for (const [id, card] of pendingCards.entries()) {
-      if (card.timestamp < cutoffTime) {
+      if (card.timestamp < pendingCutoffTime) {
         pendingCards.delete(id);
-        removedCount++;
+        removedPendingCount++;
       }
     }
 
-    if (removedCount > 0) {
+    // Limpar cartões confirmados expirados (120 horas)
+    const confirmedCardsBeforeCleanup = confirmedCards.length;
+    confirmedCards = confirmedCards.filter(card => card.timestamp >= confirmedCutoffTime);
+    removedConfirmedCount = confirmedCardsBeforeCleanup - confirmedCards.length;
+
+    // Salvar alterações se houve remoções
+    if (removedPendingCount > 0 || removedConfirmedCount > 0) {
       saveCardsToDisk();
-      console.log(`🧹 ${removedCount} cartões expirados removidos`);
+
+      const cleanupMessages = [];
+      if (removedPendingCount > 0) {
+        cleanupMessages.push(`${removedPendingCount} cartões pendentes expirados`);
+      }
+      if (removedConfirmedCount > 0) {
+        cleanupMessages.push(`${removedConfirmedCount} cartões confirmados expirados`);
+      }
+
+      console.log(`🧹 Limpeza concluída: ${cleanupMessages.join(' e ')} removidos`);
     }
   } catch (error) {
     console.error('❌ Erro na limpeza de cartões:', error);
