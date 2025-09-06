@@ -31,7 +31,9 @@ const fieldParsers: Record<string, (raw: string) => string | number | null> = {
     }).format(n);
   },
   purchaseType: (raw) => raw.trim(),
-  payment: (raw) => raw.trim()
+  payment: (raw) => raw.trim(),
+  lastFourDigits: (raw) => raw.trim(),
+  payer: (raw) => raw.trim()
 };
 
 export const commandParser = {
