@@ -385,9 +385,9 @@ function cleanupExpiredCards(): void {
 function formatCardInfo(card: CardData | PendingCard): string {
   return `
 💰 Valor: ${card.amount}
-🏦 Forma de pagamento: ${card.purchaseType.toUpperCase()}
+🏦 Tipo: ${card.purchaseType.toUpperCase()}
 🔢 Parcelas: ${card.parcelas}
-💳 Cartão final: ${card.lastFourDigits}
+💳 Final: ${card.lastFourDigits}
 👤 Pagador: ${card.payer}
 📌 Status: ${card.status === 'pending' ? '🟡 Pendente' : '✅ Confirmado'}
 `.trim();
