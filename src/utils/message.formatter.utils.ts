@@ -75,7 +75,9 @@ ${cardManagementService.formatCardInfo(card)}
     const FIELD_COMMANDS = {
       'tipo': 'purchaseType',
       'valor': 'amount',
-      'parcelas': 'parcelas'
+      'parcelas': 'parcelas',
+      'final': 'lastFourDigits',
+      'pagador': 'payer'
     } as const;
 
     const fieldsList = Object.keys(FIELD_COMMANDS).map(field => `• *${field}*`).join('\n');
@@ -89,7 +91,8 @@ _"3 [campo] [novo valor]"_
 • \`3 tipo Crédito\`
 • \`3 valor R$ 250,00\`
 • \`3 parcelas 6\`
-
+• \`3 final 8080\`
+• \`3 pagador Família\`
 ━━━━━━━━━━━━━━━━
 🔧 *Campos editáveis:*
 ${fieldsList}`;

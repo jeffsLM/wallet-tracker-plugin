@@ -13,6 +13,7 @@ interface CardData {
   ocrText: string;
   timestamp: number;
   status: 'pending' | 'confirmed' | 'cancelled';
+  payer: string;
 }
 
 interface PendingCard extends CardData {
@@ -39,6 +40,8 @@ interface CardEditOptions {
   purchaseType?: string;
   amount?: string;
   parcelas?: number;
+  lastFourDigits?: string;
+  payer?: string;
 }
 
 // Configurations
@@ -113,6 +116,7 @@ async function createPendingCard(data: {
   senderJid: string;
   groupJid: string;
   filePath: string;
+  payer: string;
 }): Promise<CardResult> {
   try {
     const cardId = uuidv4();
@@ -129,7 +133,8 @@ async function createPendingCard(data: {
       status: 'pending',
       senderJid: data.senderJid,
       groupJid: data.groupJid,
-      filePath: data.filePath
+      filePath: data.filePath,
+      payer: data.payer
     };
 
     pendingCards.set(cardId, pendingCard);
@@ -185,6 +190,12 @@ async function editPendingCard(cardId: string, updates: CardEditOptions): Promis
     if (updates.parcelas !== undefined) {
       card.parcelas = updates.parcelas;
     }
+    if (updates.payer !== undefined) {
+      card.payer = updates.payer;
+    }
+    if (updates.lastFourDigits !== undefined) {
+      card.lastFourDigits = updates.lastFourDigits;
+    }
 
     pendingCards.set(cardId, card);
     saveCardsToDisk();
@@ -234,6 +245,7 @@ async function confirmCard(cardId: string): Promise<CardResult> {
       user: pendingCard.user,
       ocrText: pendingCard.ocrText,
       timestamp: pendingCard.timestamp,
+      payer: pendingCard.payer,
       status: 'confirmed'
     };
 

@@ -105,7 +105,8 @@ export const imageMessageHandler = {
       ocrText: ocrResult.text,
       senderJid,
       groupJid: msg.key.remoteJid || '',
-      filePath: downloadResult.filePath
+      filePath: downloadResult.filePath,
+      payer: 'Família'
     });
 
     if (!result.success) await whatsappMessage.sendText(sock, {
