@@ -385,11 +385,12 @@ function cleanupExpiredCards(): void {
 function formatCardInfo(card: CardData | PendingCard): string {
   return `
 💰 Valor: ${card.amount}
-💳 Pagamento: ${card.purchaseType.toUpperCase()}
+🏦 Forma de pagamento: ${card.purchaseType.toUpperCase()}
 🔢 Parcelas: ${card.parcelas}
-💳 Final cartão usado: ${card.lastFourDigits}
-📝 Status: ${card.status === 'pending' ? '🟡 Pendente' : '✅ Confirmado'}
-  `.trim();
+💳 Cartão final: ${card.lastFourDigits}
+👤 Pagador: ${card.payer}
+📌 Status: ${card.status === 'pending' ? '🟡 Pendente' : '✅ Confirmado'}
+`.trim();
 }
 
 function getStats(): {
