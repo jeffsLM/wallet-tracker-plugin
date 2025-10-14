@@ -21,6 +21,7 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
       auth: state,
       version: [2, 3000, 1025190524],
       printQRInTerminal: false,
+      connectTimeoutMs: 60000,
       browser: WHATSAPP_CONFIG.browser,
       syncFullHistory: false, // ⚠️ Mude para false
       markOnlineOnConnect: false,
