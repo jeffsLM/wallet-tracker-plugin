@@ -19,7 +19,7 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
     const sock: WhatsappSocket = makeWASocket({
       logger: P({ level: WHATSAPP_CONFIG.loggerLevel }),
       auth: state,
-      version: [2, 3000, 1025190524],
+      version: [2, 3000, 1027934701],
       printQRInTerminal: false,
       connectTimeoutMs: 60000,
       browser: WHATSAPP_CONFIG.browser,
