@@ -22,7 +22,7 @@ export const imageMessageHandler = {
       const senderName = await userUtils.getSenderName(sock, senderJid, msg.key.remoteJid || '');
 
       // Check if user already has a pending card
-      if (await this.checkExistingPendingCard(senderJid, senderName, sock, msg)) {
+      if (await this.checkExistingPendingCard(senderJid)) {
         return;
       }
 
@@ -40,20 +40,12 @@ export const imageMessageHandler = {
   },
 
   async checkExistingPendingCard(
-    senderJid: string,
-    senderName: string,
-    sock: WhatsappSocket,
-    msg: proto.IWebMessageInfo
+    senderJid: string
   ): Promise<boolean> {
     const existingCard = cardManagementService.getPendingCardByUser(senderJid);
 
     if (existingCard) {
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: messageFormatter.createPendingCardMessage(senderName, existingCard),
-        ...(msg.message ? { quoted: msg.message } : {})
-      });
-      return true;
+      cardManagementService.cancelCard(existingCard.id);
     }
 
     return false;
