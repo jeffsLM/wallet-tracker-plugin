@@ -3,11 +3,9 @@ import * as baileys from '@whiskeysockets/baileys';
 import type { WhatsappSocket } from '../types';
 import {
   handleConnectionUpdate,
-  handleMessagesToSend,
 } from '../handlers/whatsapp.handlers';
 import { WHATSAPP_CONFIG } from '../config/whatsapp.config';
 import { handleMessagesUpsert } from '../handlers/message.handlers';
-import { handleMessagesToSendFromQueue } from './rabbitMQ.service';
 
 const makeWASocket = baileys.makeWASocket;
 const { useMultiFileAuthState } = baileys;
@@ -23,10 +21,9 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
       printQRInTerminal: false,
       connectTimeoutMs: 60000,
       browser: WHATSAPP_CONFIG.browser,
-      syncFullHistory: false, // ⚠️ Mude para false
+      syncFullHistory: false,
       markOnlineOnConnect: false,
       emitOwnEvents: false,
-      // Adicione estas opções:
       getMessage: async (key) => {
         return { conversation: '' };
       },
@@ -58,15 +55,6 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
         update,
         reconnectCallback: () => connectToWhatsApp()
       });
-
-      if (connection === 'open') {
-        handleMessagesToSendFromQueue({
-          connectionUpdate: update,
-          callback: async (messageData) => {
-            await handleMessagesToSend(messageData, sock, update);
-          }
-        });
-      }
     });
 
     sock.ev.on('creds.update', saveCreds);

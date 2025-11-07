@@ -260,6 +260,35 @@ export async function consumeFromWhatsApp(
   }
 }
 
+/**
+ * Verifica se existe mensagem pendente no queue TO_WHATSAPP e retorna a primeira encontrada
+ * @returns Mensagem do queue ou null se não houver mensagens
+ */
+export async function checkPendingMessage(): Promise<string | null> {
+  try {
+    const { channel } = await getLazyConnection();
+
+    // Usa channel.get() para pegar uma mensagem de forma pontual ao invés de consumir continuamente
+    const msg = await channel.get(RABBITMQ_CONFIG.queues.TO_WHATSAPP, { noAck: false });
+
+    if (!msg) {
+      logger.info('📭 Nenhuma mensagem pendente no queue');
+      return null;
+    }
+
+    const messageContent = msg.content.toString();
+    logger.info(`📥 Mensagem pendente encontrada: ${messageContent.substring(0, 50)}...`);
+
+    // Confirma o recebimento da mensagem
+    channel.ack(msg);
+
+    return messageContent;
+  } catch (error) {
+    logger.error('Erro ao verificar mensagens pendentes:', error);
+    return null;
+  }
+}
+
 export async function getQueueStatus(): Promise<{
   toWhatsApp: amqp.Replies.AssertQueue;
   fromWhatsApp: amqp.Replies.AssertQueue;

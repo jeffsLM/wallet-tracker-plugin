@@ -3,6 +3,7 @@ import { proto } from '@whiskeysockets/baileys';
 import { cardManagementService } from '../../services/cardManagement.service';
 import { whatsappMessage } from '../../services/whatappMessage.service';
 import { messageFormatter } from '../../utils/message.formatter.utils';
+import { checkPendingMessage } from '../../services/rabbitMQ.service';
 
 export const confirmationHandler = {
   async handle(senderJid: string, sock: WhatsappSocket, msg: proto.IWebMessageInfo): Promise<void> {
@@ -21,11 +22,25 @@ export const confirmationHandler = {
       const result = await cardManagementService.confirmCard(pendingCard.id);
 
       if (result.success) {
+        // Envia mensagem de confirmação do comprovante
         await whatsappMessage.sendText(sock, {
           jid: msg.key.remoteJid || '',
           text: messageFormatter.createConfirmedCardMessage(result.card!),
           ...(msg.message ? { quoted: msg.message } : {})
         });
+
+        // Verifica se tem mensagens pendentes no queue para enviar
+        console.log('🔍 Verificando mensagens pendentes no queue...');
+        const pendingMessage = await checkPendingMessage();
+
+        if (pendingMessage) {
+          console.log('📤 Enviando mensagem pendente do queue...');
+          await whatsappMessage.sendText(sock, {
+            jid: msg.key.remoteJid || '',
+            text: pendingMessage
+          });
+          console.log('✅ Mensagem do queue enviada com sucesso!');
+        }
       } else {
         await whatsappMessage.sendText(sock, {
           jid: msg.key.remoteJid || '',
