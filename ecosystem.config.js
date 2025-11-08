@@ -18,9 +18,9 @@ module.exports = {
       name: "log-cleaner",
       script: "./scripts/clean-logs.sh",
       cwd: "/home/ec2-user/wallet-tracker-plugin",
-      autorestart: true,
-      cron_restart: "0 */6 * * *", // limpa a cada 6 horas
-      watch: false,
-    },
+      autorestart: false,              // ❌ não reinicia automaticamente
+      cron_restart: "0 0 * * *",       // 🕛 roda 1x por dia à meia-noite
+      watch: false
+    }
   ],
 };
