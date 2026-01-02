@@ -24,14 +24,17 @@ export function handleConnectionUpdate({ update, reconnectCallback }: IWhatsAppH
 
   const { connection, lastDisconnect } = update;
 
-  if (connection === 'open') return createLogger('info').info('✅ Conectado ao WhatsApp!');
+  if (connection === 'open') {
+    createLogger('info').success('✅ Conectado ao WhatsApp!');
+    return;
+  }
 
   if (connection === 'close') {
     const shouldReconnect =
       lastDisconnect?.error instanceof Boom &&
       lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
 
-    createLogger('info').info('Conexão fechada:', lastDisconnect?.error, ', reconectando:', shouldReconnect);
+    createLogger('info').error('Conexão fechada:', lastDisconnect?.error, ', reconectando:', shouldReconnect);
     if (shouldReconnect) reconnectCallback();
   }
 }
