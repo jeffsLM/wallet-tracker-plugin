@@ -7,6 +7,7 @@ import { cardManagementService } from '../services/cardManagement.service';
 import { whatsappMessage } from '../services/whatappMessage.service';
 import { messageFormatter } from '../utils/message.formatter.utils';
 import { userUtils } from '../utils/user.utils';
+import { createLogger } from '../utils/logger.utils';
 
 interface ImageMessageRequest {
   msg: proto.IWebMessageInfo;
@@ -16,7 +17,7 @@ interface ImageMessageRequest {
 export const imageMessageHandler = {
   async handle({ msg, sock }: ImageMessageRequest): Promise<void> {
     try {
-      console.log('📨 Nova imagem recebida do grupo alvo');
+      createLogger('info').info('📨 Nova imagem recebida do grupo alvo');
 
       const senderJid = msg.key.participant || msg.key.remoteJid || '';
       const senderName = await userUtils.getSenderName(sock, senderJid, msg.key.remoteJid || '');
@@ -30,7 +31,7 @@ export const imageMessageHandler = {
       await this.processNewImage(senderJid, senderName, sock, msg);
 
     } catch (error) {
-      console.error('Erro ao processar imagem:', error);
+      createLogger('error').error('Erro ao processar imagem:', error);
       await whatsappMessage.sendText(sock, {
         jid: msg.key.remoteJid || '',
         text: messageFormatter.createErrorMessage('ERRO INTERNO', 'Falha ao processar a imagem.', 'Tente novamente em alguns instantes.\n🆘 Se o problema persistir, entre em contato com o suporte.'),

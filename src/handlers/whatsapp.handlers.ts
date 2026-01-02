@@ -8,6 +8,7 @@ import { generateQRCode } from '../utils/whatsapp.utils';
 import { whatsappMessage } from '../services/whatappMessage.service';
 
 import dotenv from 'dotenv';
+import { createLogger } from '../utils/logger.utils';
 dotenv.config();
 
 interface IWhatsAppHandlers {
@@ -23,14 +24,14 @@ export function handleConnectionUpdate({ update, reconnectCallback }: IWhatsAppH
 
   const { connection, lastDisconnect } = update;
 
-  if (connection === 'open') return console.log('✅ Conectado ao WhatsApp!');
+  if (connection === 'open') return createLogger('info').info('✅ Conectado ao WhatsApp!');
 
   if (connection === 'close') {
     const shouldReconnect =
       lastDisconnect?.error instanceof Boom &&
       lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
 
-    console.log('Conexão fechada:', lastDisconnect?.error, ', reconectando:', shouldReconnect);
+    createLogger('info').info('Conexão fechada:', lastDisconnect?.error, ', reconectando:', shouldReconnect);
     if (shouldReconnect) reconnectCallback();
   }
 }

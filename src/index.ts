@@ -1,17 +1,18 @@
 import { connectToWhatsApp } from './services/whatsapp.service';
+import { createLogger } from './utils/logger.utils';
 
 async function main(): Promise<void> {
   try {
-    console.log('🔄 Iniciando conexão com WhatsApp...');
+    createLogger('info').info('Iniciando conexão com WhatsApp...');
     await connectToWhatsApp();
 
 
     process.on('SIGINT', () => {
-      console.log('\n👋 Saindo...');
+      createLogger('info').info('\n👋 Saindo...');
       process.exit(0);
     });
   } catch (error) {
-    console.error('❌ Erro ao conectar:', error);
+    createLogger('error').error('❌ Erro ao conectar:', error);
   }
 }
 

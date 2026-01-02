@@ -1,6 +1,7 @@
 import fs from 'fs';
 import axios from 'axios';
 import { VISION_CONFIG } from '../config/googleVision.config';
+import { createLogger } from '../utils/logger.utils';
 const GOOGLE_VISION_API_KEY = process.env.GOOGLE_VISION_API_KEY || 'SUA_API_KEY_AQUI';
 
 // Interfaces - mantidas exatamente iguais
@@ -216,7 +217,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
   const startTime = Date.now();
 
   try {
-    console.log(`🔍 Iniciando OCR com Google Vision para: ${imagePath}`);
+    createLogger('info').info(`🔍 Iniciando OCR com Google Vision para: ${imagePath}`);
     if (!validateImagePath(imagePath)) {
       return {
         success: false,
@@ -231,11 +232,11 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
     result.processingTime = processingTime;
 
     if (result.success) {
-      console.log(`✅ OCR processado com sucesso em ${processingTime}ms`);
-      console.log(`📊 Confiança: ${((result.confidence || 0) * 100).toFixed(1)}%`);
-      console.log(`📝 Texto extraído: ${result.text?.length} caracteres`);
+      createLogger('info').info(`✅ OCR processado com sucesso em ${processingTime}ms`);
+      createLogger('info').info(`📊 Confiança: ${((result.confidence || 0) * 100).toFixed(1)}%`);
+      createLogger('info').info(`📝 Texto extraído: ${result.text?.length} caracteres`);
     } else {
-      console.error(`❌ Falha no OCR (${processingTime}ms): ${result.error}`);
+      createLogger('error').error(`❌ Falha no OCR (${processingTime}ms): ${result.error}`);
     }
 
     return result;
@@ -243,7 +244,7 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
   } catch (error) {
     const processingTime = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error(`❌ Erro ao conectar com Google Vision API (${processingTime}ms):`, errorMessage);
+    createLogger('error').error(`❌ Erro ao conectar com Google Vision API (${processingTime}ms):`, errorMessage);
 
     return {
       success: false,
@@ -255,13 +256,13 @@ export async function processImage(imagePath: string, options?: OCROptions): Pro
 
 // Função para processar múltiplas imagens
 export async function processMultipleImages(imagePaths: string[], options?: OCROptions): Promise<OCRResult[]> {
-  console.log(`🔍 Processando ${imagePaths.length} imagens com Google Vision...`);
+  createLogger('info').info(`🔍 Processando ${imagePaths.length} imagens com Google Vision...`);
 
   const results: OCRResult[] = [];
 
   for (let i = 0; i < imagePaths.length; i++) {
     const imagePath = imagePaths[i];
-    console.log(`📷 Processando imagem ${i + 1}/${imagePaths.length}: ${imagePath}`);
+    createLogger('info').info(`📷 Processando imagem ${i + 1}/${imagePaths.length}: ${imagePath}`);
 
     const result = await processImage(imagePath, options);
     results.push(result);
@@ -273,7 +274,7 @@ export async function processMultipleImages(imagePaths: string[], options?: OCRO
   }
 
   const successful = results.filter(r => r.success).length;
-  console.log(`✅ OCR concluído: ${successful}/${imagePaths.length} imagens processadas com sucesso`);
+  createLogger('info').info(`✅ OCR concluído: ${successful}/${imagePaths.length} imagens processadas com sucesso`);
 
   return results;
 }
@@ -283,7 +284,7 @@ export async function processDocumentImage(imagePath: string, options?: OCROptio
   const startTime = Date.now();
 
   try {
-    console.log(`🔍 Iniciando OCR de documento com Google Vision para: ${imagePath}`);
+    createLogger('info').info(`🔍 Iniciando OCR de documento com Google Vision para: ${imagePath}`);
     if (!validateImagePath(imagePath)) {
       return {
         success: false,
@@ -355,9 +356,9 @@ export async function processDocumentImage(imagePath: string, options?: OCROptio
     const blocks = pages.reduce((acc, page) => acc + (page.blocks?.length || 0), 0);
     const confidence = blocks > 5 ? 0.95 : blocks > 2 ? 0.8 : 0.6;
 
-    console.log(`✅ OCR de documento processado com sucesso em ${processingTime}ms`);
-    console.log(`📊 Confiança: ${(confidence * 100).toFixed(1)}%`);
-    console.log(`📝 Texto extraído: ${extractedText.length} caracteres`);
+    createLogger('info').info(`✅ OCR de documento processado com sucesso em ${processingTime}ms`);
+    createLogger('info').info(`📊 Confiança: ${(confidence * 100).toFixed(1)}%`);
+    createLogger('info').info(`📝 Texto extraído: ${extractedText.length} caracteres`);
 
     return {
       success: true,

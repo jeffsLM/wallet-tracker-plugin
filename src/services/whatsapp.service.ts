@@ -6,6 +6,7 @@ import {
 } from '../handlers/whatsapp.handlers';
 import { WHATSAPP_CONFIG } from '../config/whatsapp.config';
 import { handleMessagesUpsert } from '../handlers/message.handlers';
+import { createLogger } from '../utils/logger.utils';
 
 const makeWASocket = baileys.makeWASocket;
 const { useMultiFileAuthState } = baileys;
@@ -37,7 +38,7 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
 
         // Erro 405 - limpar sessão e reconectar
         if (statusCode === 405) {
-          console.log('Erro 405 detectado - limpando sessão...');
+          createLogger('info').info('Erro 405 detectado - limpando sessão...');
           await clearAuthState();
           setTimeout(() => connectToWhatsApp(), 3000);
           return;
@@ -46,7 +47,7 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
         // Outros erros de reconexão
         const shouldReconnect = statusCode !== 401;
         if (shouldReconnect) {
-          console.log('Reconectando...');
+          createLogger('info').info('Reconectando...');
           setTimeout(() => connectToWhatsApp(), 5000);
         }
       }
@@ -64,7 +65,7 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
 
     return sock;
   } catch (error) {
-    console.error('Erro ao conectar:', error);
+    createLogger('error').error('Erro ao conectar:', error);
     throw error;
   }
 }
@@ -82,8 +83,8 @@ async function clearAuthState() {
       await fs.unlink(path.join(authPath, file));
     }
 
-    console.log('Estado de autenticação limpo com sucesso');
+    createLogger('info').info('Estado de autenticação limpo com sucesso');
   } catch (error) {
-    console.error('Erro ao limpar estado:', error);
+    createLogger('error').error('Erro ao limpar estado:', error);
   }
 }

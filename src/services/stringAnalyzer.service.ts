@@ -1,4 +1,5 @@
 import Fuse from 'fuse.js';
+import { createLogger } from '../utils/logger.utils';
 
 interface CardInfo {
   type: 'credito' | 'debito' | 'alimentacao' | 'voucher' | 'refeicao' | 'desconhecido';
@@ -113,15 +114,15 @@ function identifyCardType(text: string): CardPattern['type'] {
   const normalizedText = normalizeString(text);
 
   const directMatch = findDirectKeywordMatch(normalizedText);
-  console.log(`Direct match: ${directMatch}`);
+  createLogger('info').info(`Direct match: ${directMatch}`);
   if (directMatch !== 'desconhecido') return directMatch;
 
   const fuzzyMatch = findFuzzyMatch(normalizedText);
-  console.log(`Fuzzy match: ${fuzzyMatch}`);
+  createLogger('info').info(`Fuzzy match: ${fuzzyMatch}`);
   if (fuzzyMatch !== 'desconhecido') return fuzzyMatch;
 
   const fragmentMatch = findFragmentMatch(normalizedText);
-  console.log(`Fragment match: ${fragmentMatch}`);
+  createLogger('info').info(`Fragment match: ${fragmentMatch}`);
   if (fragmentMatch !== 'desconhecido') return fragmentMatch;
 
   return 'desconhecido';
@@ -145,7 +146,7 @@ function findDirectKeywordMatch(text: string): CardPattern['type'] {
       const normalizedKeyword = normalizeString(keyword);
       if (text.includes(normalizedKeyword)) {
         typeScores[pattern.type] += pattern.weight;
-        console.log(`Palavra-chave encontrada: "${normalizedKeyword}" -> ${pattern.type} (+${pattern.weight})`);
+        createLogger('info').info(`Palavra-chave encontrada: "${normalizedKeyword}" -> ${pattern.type} (+${pattern.weight})`);
       }
     }
   }

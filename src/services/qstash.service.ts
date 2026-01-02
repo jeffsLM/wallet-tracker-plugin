@@ -1,4 +1,5 @@
 import { Client } from "@upstash/qstash";
+import { createLogger } from '../utils/logger.utils';
 
 const API_TOKEN = process.env.API_TOKEN || '';
 const WEBHOOK_URL = process.env.WEBHOOK_URL || '';
@@ -18,10 +19,10 @@ export async function sendMessage(payload: any): Promise<QStashResult> {
   const startTime = Date.now();
 
   try {
-    console.log(`🚀 Iniciando envio via QStash`);
-    console.log(`🎯 Webhook: ${WEBHOOK_URL}`);
-    console.log(`📦 Payload:`, { ...payload });
-    console.log(`🔐 Auth configurado: ${API_TOKEN ? 'Sim' : 'Não'}`);
+    createLogger('info').info(`🚀 Iniciando envio via QStash`);
+    createLogger('info').info(`🎯 Webhook: ${WEBHOOK_URL}`);
+    createLogger('info').info(`📦 Payload: ${JSON.stringify({ ...payload })}`);
+    createLogger('info').info(`🔐 Auth configurado: ${API_TOKEN ? 'Sim' : 'Não'}`);
 
     await client.publish({
       body: JSON.stringify({ ...payload }),
@@ -31,7 +32,7 @@ export async function sendMessage(payload: any): Promise<QStashResult> {
       url: WEBHOOK_URL,
     });
 
-    console.log(`✅ Mensagem enviada!`);
+    createLogger('info').info(`✅ Mensagem enviada!`);
 
     return {
       success: true,
@@ -40,8 +41,8 @@ export async function sendMessage(payload: any): Promise<QStashResult> {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error(`❌ Erro ao enviar via QStash:`, errorMessage);
-    console.error(`❌ Detalhes do erro:`, error);
+    createLogger('error').error(`❌ Erro ao enviar via QStash:`, errorMessage);
+    createLogger('error').error(`❌ Detalhes do erro:`, error);
 
     return {
       success: false,

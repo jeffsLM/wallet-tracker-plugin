@@ -1,4 +1,5 @@
 import { WhatsappSocket } from '../types';
+import { createLogger } from './logger.utils';
 
 
 export const userUtils = {
@@ -20,14 +21,14 @@ export const userUtils = {
           }
         }
       } catch (groupError) {
-        console.log('Não foi possível obter metadata do grupo');
+        createLogger('error').error('Não foi possível obter metadata do grupo', groupError);
       }
 
       // Fallback: use phone number
       return phoneNumber;
 
     } catch (error) {
-      console.error('Erro ao obter nome do remetente:', error);
+      createLogger('error').error('Erro ao obter nome do remetente:', error);
       return senderJid.split('@')[0];
     }
   }

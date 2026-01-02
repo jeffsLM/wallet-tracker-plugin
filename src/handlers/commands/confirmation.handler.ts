@@ -4,6 +4,7 @@ import { cardManagementService } from '../../services/cardManagement.service';
 import { whatsappMessage } from '../../services/whatappMessage.service';
 import { messageFormatter } from '../../utils/message.formatter.utils';
 import { checkPendingMessage } from '../../services/rabbitMQ.service';
+import { createLogger } from '../../utils/logger.utils';
 
 export const confirmationHandler = {
   async handle(senderJid: string, sock: WhatsappSocket, msg: proto.IWebMessageInfo): Promise<void> {
@@ -30,16 +31,16 @@ export const confirmationHandler = {
         });
 
         // Verifica se tem mensagens pendentes no queue para enviar
-        console.log('🔍 Verificando mensagens pendentes no queue...');
+        createLogger('info').info('Verificando mensagens pendentes no queue...');
         const pendingMessage = await checkPendingMessage();
 
         if (pendingMessage) {
-          console.log('📤 Enviando mensagem pendente do queue...');
+          createLogger('📤').info('Enviando mensagem pendente do queue...');
           await whatsappMessage.sendText(sock, {
             jid: msg.key.remoteJid || '',
             text: pendingMessage
           });
-          console.log('✅ Mensagem do queue enviada com sucesso!');
+          createLogger('info').info('Mensagem do queue enviada com sucesso!');
         }
       } else {
         await whatsappMessage.sendText(sock, {
@@ -49,7 +50,7 @@ export const confirmationHandler = {
         });
       }
     } catch (error) {
-      console.error('Erro ao confirmar comprovante:', error);
+      createLogger('error').error('Erro ao confirmar comprovante:', error);
       await whatsappMessage.sendText(sock, {
         jid: msg.key.remoteJid || '',
         text: messageFormatter.createErrorMessage('ERRO INTERNO', 'Falha ao confirmar comprovante.', 'Tente novamente em alguns instantes.'),

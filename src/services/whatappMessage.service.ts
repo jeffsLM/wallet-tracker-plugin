@@ -1,4 +1,5 @@
 import { WASocket, proto } from '@whiskeysockets/baileys';
+import { createLogger } from '../utils/logger.utils';
 
 interface WhatsAppMessageData {
   jid: string;
@@ -13,9 +14,9 @@ export async function sendText(sock: WASocket, { jid, text, quotedMessage }: Wha
       // se houver mensagem a ser respondida, inclui como quoted
       ...(quotedMessage ? { quoted: quotedMessage } : {})
     });
-    console.log(`✅ Mensagem enviada para ${jid}`);
+    createLogger('info').info(`✅ Mensagem enviada para ${jid}`);
   } catch (err) {
-    console.error(`❌ Erro ao enviar mensagem para ${jid}:`, err);
+    createLogger('error').error(`❌ Erro ao enviar mensagem para ${jid}:`, err);
   }
 }
 

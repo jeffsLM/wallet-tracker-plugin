@@ -1,8 +1,9 @@
 import qrcode from 'qrcode-terminal';
 import { proto, WASocket } from '@whiskeysockets/baileys';
+import { createLogger } from './logger.utils';
 
 export function generateQRCode(qr: string): void {
-  console.log('📲 Escaneie o QR code abaixo com seu WhatsApp:');
+  createLogger('info').info('📲 Escaneie o QR code abaixo com seu WhatsApp:');
   qrcode.generate(qr, { small: true });
 }
 

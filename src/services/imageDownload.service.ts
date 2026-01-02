@@ -2,6 +2,7 @@ import { downloadMediaMessage, WAMessage } from '@whiskeysockets/baileys';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
+import { createLogger } from '../utils/logger.utils';
 
 const IMAGE_CONFIG = {
   destinationFolder: 'images',
@@ -23,7 +24,7 @@ function ensureDestinationFolder(): string {
 
   if (!fs.existsSync(destinationFolder)) {
     fs.mkdirSync(destinationFolder, { recursive: true });
-    console.log(`📁 Pasta criada: ${destinationFolder}`);
+    createLogger('info').info(`📁 Pasta criada: ${destinationFolder}`);
   }
 
   return destinationFolder;
@@ -52,7 +53,7 @@ async function compressImage(buffer: Buffer, maxSizeKB: number = IMAGE_CONFIG.ma
 
 export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResult> {
   try {
-    console.log('📥 Iniciando download da imagem...');
+    createLogger('info').info('📥 Iniciando download da imagem...');
 
     // Download do buffer da imagem
     const buffer = await downloadMediaMessage(msg, 'buffer', {});
@@ -64,7 +65,7 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
       };
     }
 
-    console.log(`📊 Buffer original: ${(buffer.length / 1024).toFixed(1)} KB`);
+    createLogger('info').info(`📊 Buffer original: ${(buffer.length / 1024).toFixed(1)} KB`);
 
     const mimeType = msg.message?.imageMessage?.mimetype || 'image/jpeg';
     const fileName = generateFileName(mimeType);
@@ -86,7 +87,7 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('❌ Erro no download da imagem:', errorMessage);
+    createLogger('error').error('❌ Erro no download da imagem:', errorMessage);
 
     return {
       success: false,
@@ -115,11 +116,11 @@ export async function cleanupOldImages(maxAgeHours: number = 24): Promise<void> 
     }
 
     if (deletedCount > 0) {
-      console.log(`🗑️  ${deletedCount} imagem(ns) antiga(s) removida(s)`);
+      createLogger('info').info(`🗑️  ${deletedCount} imagem(ns) antiga(s) removida(s)`);
     }
 
   } catch (error) {
-    console.error('⚠️  Erro na limpeza de imagens antigas:', error);
+    createLogger('error').error('⚠️  Erro na limpeza de imagens antigas:', error);
   }
 }
 

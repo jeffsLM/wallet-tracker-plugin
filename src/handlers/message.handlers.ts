@@ -1,4 +1,5 @@
 import { MessagesUpsert } from '../types';
+import { createLogger } from '../utils/logger.utils';
 import { imageMessageHandler } from './imageMessage.handler';
 import { textMessageHandler } from './textMessage.handler';
 import dotenv from 'dotenv';
@@ -28,7 +29,7 @@ export async function handleMessagesUpsert({ messages, sock }: MessagesUpsert): 
     const messageId = `${msg.key.remoteJid}_${msg.key.id}`;
 
     if (processedMessages.has(messageId)) {
-      console.log(`Mensagem duplicada ignorada: ${messageId}`);
+      createLogger('info').info(`Mensagem duplicada ignorada: ${messageId}`);
       continue;
     }
 

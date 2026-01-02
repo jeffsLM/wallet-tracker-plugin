@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { qstashService } from './qstash.service';
+import { createLogger } from '../utils/logger.utils';
 
 interface CardData {
   id: string;
@@ -75,17 +76,17 @@ function loadCardsFromDisk(): void {
       for (const card of pendingData) {
         pendingCards.set(card.id, card);
       }
-      console.log(`📋 ${pendingCards.size} cartões pendentes carregados`);
+      createLogger('info').info(`📋 ${pendingCards.size} cartões pendentes carregados`);
     }
 
     // Load confirmed cards
     const confirmedPath = path.join(CARDS_CONFIG.dataDir, CARDS_CONFIG.confirmedFile);
     if (fs.existsSync(confirmedPath)) {
       confirmedCards = JSON.parse(fs.readFileSync(confirmedPath, 'utf8'));
-      console.log(`✅ ${confirmedCards.length} cartões confirmados carregados`);
+      createLogger('info').info(`✅ ${confirmedCards.length} cartões confirmados carregados`);
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar cartões do disco:', error);
+    createLogger('error').error('❌ Erro ao carregar cartões do disco:', error);
   }
 }
 
@@ -100,9 +101,9 @@ function saveCardsToDisk(): void {
     const confirmedPath = path.join(CARDS_CONFIG.dataDir, CARDS_CONFIG.confirmedFile);
     fs.writeFileSync(confirmedPath, JSON.stringify(confirmedCards, null, 2));
 
-    console.log(`💾 Cartões salvos: ${pendingArray.length} pendentes, ${confirmedCards.length} confirmados`);
+    createLogger('info').info(`💾 Cartões salvos: ${pendingArray.length} pendentes, ${confirmedCards.length} confirmados`);
   } catch (error) {
-    console.error('❌ Erro ao salvar cartões:', error);
+    createLogger('error').error('❌ Erro ao salvar cartões:', error);
   }
 }
 
@@ -141,7 +142,7 @@ async function createPendingCard(data: {
     pendingCards.set(cardId, pendingCard);
     saveCardsToDisk();
 
-    console.log(`📝 Novo cartão criado - ID: ${cardId.substring(0, 8)} - Usuário: ${data.user}`);
+    createLogger('info').info(`📝 Novo cartão criado - ID: ${cardId.substring(0, 8)} - Usuário: ${data.user}`);
 
     return {
       success: true,
@@ -149,7 +150,7 @@ async function createPendingCard(data: {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('❌ Erro ao criar cartão pendente:', errorMessage);
+    createLogger('error').error('❌ Erro ao criar cartão pendente:', errorMessage);
 
     return {
       success: false,
@@ -201,7 +202,7 @@ async function editPendingCard(cardId: string, updates: CardEditOptions): Promis
     pendingCards.set(cardId, card);
     saveCardsToDisk();
 
-    console.log(`✏️ Cartão editado - ID: ${cardId.substring(0, 8)}`);
+    createLogger('info').info(`✏️ Cartão editado - ID: ${cardId.substring(0, 8)}`);
 
     return {
       success: true,
@@ -209,7 +210,7 @@ async function editPendingCard(cardId: string, updates: CardEditOptions): Promis
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('❌ Erro ao editar cartão:', errorMessage);
+    createLogger('error').error('❌ Erro ao editar cartão:', errorMessage);
 
     return {
       success: false,
@@ -260,7 +261,7 @@ async function confirmCard(cardId: string): Promise<CardResult> {
     });
 
     saveCardsToDisk();
-    console.log(`✅ Cartão confirmado - ID: ${cardId.substring(0, 8)} - Usuário: ${confirmedCard.user}`);
+    createLogger('info').info(`✅ Cartão confirmado - ID: ${cardId.substring(0, 8)} - Usuário: ${confirmedCard.user}`);
 
     return {
       success: true,
@@ -268,7 +269,7 @@ async function confirmCard(cardId: string): Promise<CardResult> {
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    console.error('❌ Erro ao confirmar cartão:', errorMessage);
+    createLogger('error').error('❌ Erro ao confirmar cartão:', errorMessage);
 
     return {
       success: false,
@@ -290,7 +291,7 @@ async function cancelCard(cardId: string): Promise<CardResult> {
     pendingCards.delete(cardId);
     saveCardsToDisk();
 
-    console.log(`❌ Cartão cancelado - ID: ${cardId.substring(0, 8)}`);
+    createLogger('info').info(`❌ Cartão cancelado - ID: ${cardId.substring(0, 8)}`);
 
     return {
       success: true,
@@ -395,10 +396,10 @@ function cleanupExpiredCards(): void {
         cleanupMessages.push(`${removedConfirmedCount} cartões confirmados expirados`);
       }
 
-      console.log(`🧹 Limpeza concluída: ${cleanupMessages.join(' e ')} removidos`);
+      createLogger('info').info(`🧹 Limpeza concluída: ${cleanupMessages.join(' e ')} removidos`);
     }
   } catch (error) {
-    console.error('❌ Erro na limpeza de cartões:', error);
+    createLogger('error').error('❌ Erro na limpeza de cartões:', error);
   }
 }
 
