@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "wallet-tracker-plugin",
       script: "dist/index.js",
-      cwd: "/home/ubuntu/projects/wallet-tracker-plugin",
+      cwd: "/home/ubuntu/wallet-tracker-plugin",
       instances: 1,
       autorestart: true,
       watch: false,
@@ -17,7 +17,7 @@ module.exports = {
     {
       name: "log-cleaner",
       script: "./scripts/clean-logs.sh",
-      cwd: "/home/ubuntu/projects/wallet-tracker-plugin",
+      cwd: "/home/ubuntu/wallet-tracker-plugin",
       autorestart: false,              // ❌ não reinicia automaticamente
       cron_restart: "0 0 * * *",       // 🕛 roda 1x por dia à meia-noite
       watch: false
