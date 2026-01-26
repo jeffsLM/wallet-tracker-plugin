@@ -65,8 +65,8 @@ export const imageMessageHandler = {
       ...(msg.message ? { quoted: msg.message } : {})
     });
 
-    // Download image
-    const downloadResult = await imageDownloadService.downloadAndSaveImage({ key: msg.key as proto.IMessageKey, messageStubParameters: msg.messageStubParameters });
+    // Download image - passar mensagem completa para ter acesso aos dados da imagem
+    const downloadResult = await imageDownloadService.downloadAndSaveImage(msg as any);
     if (!downloadResult.success || !downloadResult.filePath) {
       await whatsappMessage.sendText(sock, {
         jid: msg?.key?.remoteJid || '',

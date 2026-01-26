@@ -40,7 +40,7 @@ function isDuplicateMessage(messageId: string): boolean {
 export async function handleMessagesUpsert({ messages, sock }: MessagesUpsert): Promise<void> {
   try {
     logger.info(`🔥 handleMessagesUpsert chamado com ${messages.length} mensagem(ns)`);
-    
+
     for (const msg of messages) {
       const remoteJid = msg.key.remoteJid;
 
