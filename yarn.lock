@@ -1223,16 +1223,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@whiskeysockets/baileys@npm:^6.7.20":
-  version: 6.7.20
-  resolution: "@whiskeysockets/baileys@npm:6.7.20"
+"@whiskeysockets/baileys@npm:^7.0.0-rc.9":
+  version: 7.0.0-rc.9
+  resolution: "@whiskeysockets/baileys@npm:7.0.0-rc.9"
   dependencies:
     "@cacheable/node-cache": "npm:^1.4.0"
     "@hapi/boom": "npm:^9.1.3"
     async-mutex: "npm:^0.5.0"
-    axios: "npm:^1.6.0"
     libsignal: "git+https://github.com/whiskeysockets/libsignal-node.git"
+    lru-cache: "npm:^11.1.0"
     music-metadata: "npm:^11.7.0"
+    p-queue: "npm:^9.0.0"
     pino: "npm:^9.6"
     protobufjs: "npm:^7.2.4"
     ws: "npm:^8.13.0"
@@ -1248,7 +1249,7 @@ __metadata:
       optional: true
     link-preview-js:
       optional: true
-  checksum: 10c0/153380ba1d7dba66fae62f740ac7f2dab7eda938f55a8f25f16e4d2176217017ca46dea938ff35a5c03ef1611886f92b727beeed1eea4548272e116c985db80e
+  checksum: 10c0/2a6e46038fef2e8b5fba93dfb0c3e65cf712dbede8494c473da6a064143033a2038c20454ab44202df2aa60f8ce8027889aa5b1cd736418c0e0d219e79f1517d
   languageName: node
   linkType: hard
 
@@ -1387,7 +1388,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.11.0, axios@npm:^1.6.0, axios@npm:^1.6.5":
+"axios@npm:^1.11.0, axios@npm:^1.6.5":
   version: 1.11.0
   resolution: "axios@npm:1.11.0"
   dependencies:
@@ -3027,6 +3028,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-queue@npm:^9.0.0":
+  version: 9.1.0
+  resolution: "p-queue@npm:9.1.0"
+  dependencies:
+    eventemitter3: "npm:^5.0.1"
+    p-timeout: "npm:^7.0.0"
+  checksum: 10c0/f6bb4644997c20cbbf68c0c88208283697c6c9b1e1879f2073791b1ffcb2d2eb0a9fe35c9631e0c74bd6562ef159b87b418d48df7e7b30e5ddb4d99055bb5c92
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^7.0.0":
+  version: 7.0.1
+  resolution: "p-timeout@npm:7.0.1"
+  checksum: 10c0/87d96529d1096d506607218dba6f9ec077c6dbedd0c2e2788c748e33bcd05faae8a81009fd9d22ec0b3c95fc83f4717306baba223f6e464737d8b99294c3e863
+  languageName: node
+  linkType: hard
+
 "parse-ms@npm:^3.0.0":
   version: 3.0.0
   resolution: "parse-ms@npm:3.0.0"
@@ -3965,7 +3983,7 @@ __metadata:
     "@types/node": "npm:^24.2.1"
     "@types/qrcode-terminal": "npm:^0.12.2"
     "@upstash/qstash": "npm:^2.8.2"
-    "@whiskeysockets/baileys": "npm:^6.7.20"
+    "@whiskeysockets/baileys": "npm:^7.0.0-rc.9"
     amqplib: "npm:^0.10.8"
     axios: "npm:^1.11.0"
     dotenv: "npm:^17.2.1"

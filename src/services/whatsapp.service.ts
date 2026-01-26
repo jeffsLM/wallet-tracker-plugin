@@ -130,11 +130,12 @@ async function scheduleReconnect(reason: string, statusCode?: number): Promise<v
 export async function connectToWhatsApp(): Promise<WhatsappSocket> {
   try {
     const { state, saveCreds } = await useMultiFileAuthState(WHATSAPP_CONFIG.authStatePath);
+    const { version, isLatest } = await baileys.fetchLatestWaWebVersion({});
 
     const sock: WhatsappSocket = makeWASocket({
       logger: P({ level: WHATSAPP_CONFIG.loggerLevel }),
       auth: state,
-      version: [2, 3000, 1027934701],
+      version: version,//[2, 3000, 1027934701],
       printQRInTerminal: false,
       connectTimeoutMs: 60000,
       browser: WHATSAPP_CONFIG.browser,
@@ -227,10 +228,10 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
     });
 
     sock.ev.on('creds.update', saveCreds);
-    
+
     // Log para confirmar que o handler foi registrado
     createLogger('info').info('📱 Handler de mensagens registrado com sucesso');
-    
+
     sock.ev.on('messages.upsert', async (messages) => {
       try {
         createLogger('info').info(`🔔 Evento messages.upsert recebido! Total de mensagens: ${messages.messages?.length || 0}`);
