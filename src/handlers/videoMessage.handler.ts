@@ -19,29 +19,6 @@ interface VideoMessageRequest {
 
 const logger = createLogger('VideoHandler');
 
-// Rate limiting: máximo 20 vídeos por hora por usuário
-const userRateLimits = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(userId: string): boolean {
-  const limit = userRateLimits.get(userId);
-  const now = Date.now();
-
-  if (!limit || now > limit.resetAt) {
-    userRateLimits.set(userId, {
-      count: 1,
-      resetAt: now + 60 * 60 * 1000 // 1 hora
-    });
-    return true;
-  }
-
-  if (limit.count >= 20) {
-    return false;
-  }
-
-  limit.count++;
-  return true;
-}
-
 export const videoMessageHandler = {
   async handle({ msg, sock }: VideoMessageRequest): Promise<void> {
     try {
@@ -59,11 +36,11 @@ export const videoMessageHandler = {
 
       logger.info(`📹 Link de vídeo válido detectado de ${senderName}: ${videoUrl}`);
 
-      // 3. Parse metadados da URL
+      // 2. Parse metadados da URL
       const metadata = urlValidator.parseVideoUrl(videoUrl);
       const normalizedUrl = urlValidator.normalizeVideoUrl(videoUrl);
 
-      // 4. Salvar no MongoDB (fonte da verdade)
+      // 3. Salvar no MongoDB (fonte da verdade)
       const videoDoc = await videoStorage.create({
         url: normalizedUrl,
         texto: messageText,
@@ -74,7 +51,7 @@ export const videoMessageHandler = {
         ...(metadata && { metadata })
       });
 
-      // 5. Publicar na fila (payload mínimo)
+      // 4. Publicar na fila (payload mínimo)
       const published = await videoQueue.publish({
         url: normalizedUrl,
         texto: messageText,
@@ -85,26 +62,18 @@ export const videoMessageHandler = {
 
       if (!published) {
         logger.error('Falha ao publicar na fila após retries');
-        await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
-          text: '⚠️ Vídeo salvo mas houve problema ao enviar para processamento. Será reprocessado automaticamente.',
+        // ⚠️ Reação de aviso
+        await whatsappMessage.sendReaction(sock, {
+          messageKey: msg.key,
+          emoji: '⚠️'
         });
         return;
       }
 
-      // 6. Resposta APENAS quando link válido foi processado com sucesso
-      const platformEmoji = {
-        youtube: '📺',
-        tiktok: '🎵',
-        instagram: '📸',
-        facebook: '👥',
-        twitter: '🐦',
-        other: '🎬'
-      }[metadata?.platform || 'other'];
-
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: `✅ Vídeo adicionado à fila de curadoria!\n\n${platformEmoji} ${normalizedUrl}\n\n📊 ID: ${videoDoc._id}`,
+      // 5. Confirmação via reação ✅
+      await whatsappMessage.sendReaction(sock, {
+        messageKey: msg.key,
+        emoji: '✅'
       });
 
       logger.success(`✅ Vídeo ${videoDoc._id} salvo e publicado com sucesso`);
@@ -113,10 +82,10 @@ export const videoMessageHandler = {
       // Erro REAL no processamento (banco caiu, fila inacessível, etc)
       logger.error('❌ Erro crítico ao processar vídeo:', error);
 
-      // Só envia mensagem de erro se REALMENTE tentou processar algo
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: '❌ Erro ao adicionar vídeo. Tente novamente em alguns instantes.',
+      // ❌ Reação de erro
+      await whatsappMessage.sendReaction(sock, {
+        messageKey: msg.key,
+        emoji: '❌'
       });
     }
   }
