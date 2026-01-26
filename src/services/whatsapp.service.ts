@@ -228,35 +228,6 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
 
     sock.ev.on('creds.update', saveCreds);
     sock.ev.on('messages.upsert', async (messages) => {
-      // Log detalhado de cada mensagem recebida
-      createLogger('info').info('📬 === NOVA MENSAGEM RECEBIDA ===');
-      createLogger('info').info(`📊 Total de mensagens no lote: ${messages.messages.length}`);
-      
-      messages.messages.forEach((msg, index) => {
-        createLogger('info').info(`\n📨 Mensagem ${index + 1}/${messages.messages.length}:`);
-        createLogger('info').info(`   🆔 ID: ${msg.key.id}`);
-        createLogger('info').info(`   📍 De: ${msg.key.remoteJid}`);
-        createLogger('info').info(`   👤 Participante: ${msg.key.participant || 'N/A'}`);
-        createLogger('info').info(`   📝 Tipo: ${messages.type}`);
-        createLogger('info').info(`   ⏰ Timestamp: ${new Date(Number(msg.messageTimestamp) * 1000).toLocaleString('pt-BR')}`);
-        
-        // Log do conteúdo da mensagem
-        if (msg.message?.conversation) {
-          createLogger('info').info(`   💬 Texto: "${msg.message.conversation}"`);
-        }
-        if (msg.message?.extendedTextMessage?.text) {
-          createLogger('info').info(`   💬 Texto estendido: "${msg.message.extendedTextMessage.text}"`);
-        }
-        if (msg.message?.imageMessage) {
-          createLogger('info').info(`   🖼️ Contém imagem`);
-        }
-        if (msg.message?.videoMessage) {
-          createLogger('info').info(`   🎥 Contém vídeo`);
-        }
-      });
-      
-      createLogger('info').info('=================================\n');
-      
       await handleMessagesUpsert({ sock, ...messages });
     });
 

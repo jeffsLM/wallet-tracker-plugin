@@ -67,11 +67,15 @@ _Envie um link de vídeo para adicionar à fila!_
     } catch (error) {
       logger.error('❌ Erro ao processar comando de status:', error);
       
-      // Envia mensagem de erro
-      await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
-        text: '❌ Erro ao obter status do bot.',
-      });
+      // Tenta enviar mensagem de erro, mas não falha se não conseguir
+      try {
+        await whatsappMessage.sendText(sock, {
+          jid: msg.key.remoteJid || '',
+          text: '❌ Erro ao obter status do bot.',
+        });
+      } catch (sendError) {
+        logger.error('❌ Não foi possível enviar mensagem de erro:', sendError);
+      }
     }
   }
 };

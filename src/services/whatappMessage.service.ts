@@ -22,8 +22,15 @@ export async function sendText(sock: WASocket, { jid, text, quotedMessage }: Wha
       ...(quotedMessage ? { quoted: quotedMessage } : {})
     });
     logger.info(`✅ Mensagem enviada para ${jid}`);
-  } catch (err) {
-    logger.error(`❌ Erro ao enviar mensagem para ${jid}:`, err);
+  } catch (err: any) {
+    // Erro de sender key corrompido
+    if (err.message?.includes('senderMessageKeys') || err.message?.includes('SenderKeyState')) {
+      logger.error(`❌ Erro de SenderKey corrompido para ${jid}. Necessário reconexão ou limpeza de sessão.`);
+      logger.error(`💡 Sugestão: Limpe a pasta 'auth' e reconecte o bot.`);
+    } else {
+      logger.error(`❌ Erro ao enviar mensagem para ${jid}:`, err);
+    }
+    throw err; // Re-throw para que o handler saiba que falhou
   }
 }
 
@@ -36,8 +43,14 @@ export async function sendReaction(sock: WASocket, { messageKey, emoji }: Reacti
       }
     });
     logger.info(`✅ Reação ${emoji} enviada para mensagem ${messageKey.id}`);
-  } catch (err) {
-    logger.error(`❌ Erro ao enviar reação:`, err);
+  } catch (err: any) {
+    // Erro de sender key corrompido
+    if (err.message?.includes('senderMessageKeys') || err.message?.includes('SenderKeyState')) {
+      logger.error(`❌ Erro de SenderKey corrompido. Necessário reconexão ou limpeza de sessão.`);
+    } else {
+      logger.error(`❌ Erro ao enviar reação:`, err);
+    }
+    // Não re-throw para reações, são menos críticas
   }
 }
 
