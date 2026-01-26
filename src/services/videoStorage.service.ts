@@ -200,6 +200,19 @@ export async function getStats(): Promise<VideoStats> {
 }
 
 /**
+ * Conta vídeos com base em filtros
+ */
+async function count(filter: Partial<VideoMessage> = {}): Promise<number> {
+  try {
+    const coll = await connect();
+    return await coll.countDocuments(filter as Document);
+  } catch (error) {
+    logger.error('Erro ao contar vídeos:', error);
+    throw error;
+  }
+}
+
+/**
  * Fecha conexão com MongoDB
  */
 export async function closeConnection(): Promise<void> {
@@ -221,5 +234,6 @@ export const videoStorage = {
   findFailed,
   findByUser,
   getStats,
+  count,
   closeConnection
 };
