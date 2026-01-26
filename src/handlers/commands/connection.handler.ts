@@ -1,98 +1,91 @@
 import { WhatsappSocket } from '../../types';
 import { proto } from '@whiskeysockets/baileys';
 import { whatsappMessage } from '../../services/whatappMessage.service';
-import { getConnectionStats, getConnectionHealth } from '../../services/whatsapp.service';
+import { getConnectionHealth, getConnectionStats } from '../../services/whatsapp.service';
 import { createLogger } from '../../utils/logger.utils';
 
 export const connectionHandler = {
   async handle(senderJid: string, sock: WhatsappSocket, msg: proto.IWebMessageInfo): Promise<void> {
     try {
-      const stats = getConnectionStats();
+      createLogger('info').info(`📊 Comando de status de conexão recebido de ${senderJid}`);
+      
+      // Obter informações de saúde da conexão
       const health = getConnectionHealth();
+      const stats = getConnectionStats();
+      
+      // Criar mensagem formatada com o status
+      let statusEmoji = '✅';
+      let statusText = 'Conectado';
+      
+      if (health.status === 'reconnecting') {
+        statusEmoji = '🔄';
+        statusText = 'Reconectando';
+      } else if (health.status === 'disconnected') {
+        statusEmoji = '❌';
+        statusText = 'Desconectado';
+      }
+      
+      // Formatar tempo de uptime
+      const uptimeHours = Math.floor(health.uptime / 3600);
+      const uptimeMinutes = Math.floor((health.uptime % 3600) / 60);
+      const uptimeSeconds = health.uptime % 60;
+      const uptimeFormatted = `${uptimeHours}h ${uptimeMinutes}m ${uptimeSeconds}s`;
+      
+      // Formatar última conexão
+      const lastConnection = health.lastConnection 
+        ? new Date(health.lastConnection).toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })
+        : 'Nunca';
+      
+      const message = `${statusEmoji} *STATUS DA CONEXÃO*\n\n` +
+        `📡 *Status:* ${statusText}\n` +
+        `⏱️ *Uptime:* ${uptimeFormatted}\n` +
+        `🕐 *Última Conexão:* ${lastConnection}\n\n` +
+        `📊 *Estatísticas:*\n` +
+        `   • Total de Reconexões: ${stats.totalReconnects}\n` +
+        `   • Erros 503: ${stats.error503Count}\n` +
+        `   • Erros 500: ${stats.error500Count}\n` +
+        `   • Timeouts: ${stats.errorTimeoutCount}\n` +
+        `   • Taxa de Erro: ${health.errorRate}\n\n` +
+        `${stats.isConnecting ? '🔄 *Reconexão em andamento...*\n' : ''}` +
+        `${stats.currentReconnectAttempts > 0 ? `⚠️ *Tentativas de reconexão:* ${stats.currentReconnectAttempts}\n` : ''}` +
+        `\n💡 _Use este comando a qualquer momento para verificar o status_`;
+      
+      // Verificar se temos o jid para responder
+      const remoteJid = msg.key?.remoteJid;
+      if (!remoteJid) {
+        createLogger('error').error('❌ RemoteJid não encontrado na mensagem');
+        return;
+      }
 
-      const statusText = this.formatConnectionStatus(stats, health);
-
+      // Enviar mensagem de resposta
       await whatsappMessage.sendText(sock, {
-        jid: msg?.key?.remoteJid || '',
-        text: statusText,
-        ...(msg.message ? { quoted: msg.message } : {})
+        text: message,
+        jid: remoteJid,
       });
+      
+      createLogger('info').success(`✅ Status de conexão enviado para ${senderJid}`);
     } catch (error) {
-      createLogger('error').error('Erro ao consultar estatísticas de conexão:', error);
-      await whatsappMessage.sendText(sock, {
-        jid: msg?.key?.remoteJid || '',
-        text: '❌ Erro ao obter estatísticas de conexão.',
-        ...(msg.message ? { quoted: msg.message } : {})
-      });
+      createLogger('error').error('❌ Erro ao processar comando de status de conexão:', error);
+      
+      // Tentar enviar mensagem de erro
+      try {
+        const remoteJid = msg.key?.remoteJid;
+        if (remoteJid) {
+          await whatsappMessage.sendText(sock, {
+            text: '❌ Erro ao obter status da conexão. Tente novamente.',
+            jid: remoteJid,
+          });
+        }
+      } catch (sendError) {
+        createLogger('error').error('❌ Erro ao enviar mensagem de erro:', sendError);
+      }
     }
-  },
-
-  formatConnectionStatus(stats: any, health: any): string {
-    const statusEmoji = health.status === 'connected' ? '🟢' :
-      health.status === 'reconnecting' ? '🟡' : '🔴';
-
-    const healthEmoji = health.isHealthy ? '✅' : '⚠️';
-
-    let message = `╔═══════════════════════════╗\n`;
-    message += `║  ${statusEmoji} *STATUS DA CONEXÃO* ${healthEmoji}  ║\n`;
-    message += `╚═══════════════════════════╝\n\n`;
-
-    message += `📊 *Estado Atual*\n`;
-    message += `• Status: ${this.translateStatus(health.status)}\n`;
-    message += `• Saúde: ${health.isHealthy ? 'Saudável ✅' : 'Instável ⚠️'}\n`;
-    message += `• Taxa de Erro: ${health.errorRate}\n\n`;
-
-    if (stats.lastSuccessfulConnection) {
-      const lastConn = new Date(stats.lastSuccessfulConnection);
-      message += `🕐 *Última Conexão*\n`;
-      message += `• ${lastConn.toLocaleString('pt-BR')}\n`;
-      message += `• Uptime: ${this.formatUptime(stats.uptime)}\n\n`;
-    }
-
-    message += `📈 *Estatísticas de Reconexão*\n`;
-    message += `• Total de reconexões: ${stats.totalReconnects}\n`;
-    message += `• Tentativas atuais: ${stats.currentReconnectAttempts}\n\n`;
-
-    message += `⚠️ *Erros Registrados*\n`;
-    message += `• Erro 503 (Serviço Indisponível): ${stats.error503Count}\n`;
-    message += `• Erro 500 (Erro Interno): ${stats.error500Count}\n`;
-    message += `• Timeouts: ${stats.errorTimeoutCount}\n\n`;
-
-    if (stats.lastError) {
-      const lastError = stats.lastError;
-      const errorTime = new Date(lastError.timestamp);
-      message += `🔴 *Último Erro*\n`;
-      message += `• Status: ${lastError.statusCode || 'N/A'}\n`;
-      message += `• Razão: ${lastError.reason}\n`;
-      message += `• Quando: ${errorTime.toLocaleString('pt-BR')}\n\n`;
-    }
-
-    if (health.status === 'reconnecting') {
-      message += `⏳ *Reconectando...*\n`;
-      message += `Tentativa ${stats.currentReconnectAttempts} em andamento.\n`;
-      message += `Aguarde enquanto restabelecemos a conexão.\n\n`;
-    }
-
-    message += `╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌\n`;
-    message += `💡 *Dica*: O sistema reconecta automaticamente\n`;
-    message += `em caso de falhas temporárias (503, 500, etc).\n`;
-
-    return message;
-  },
-
-  translateStatus(status: string): string {
-    const translations: Record<string, string> = {
-      'connected': 'Conectado 🟢',
-      'reconnecting': 'Reconectando 🟡',
-      'disconnected': 'Desconectado 🔴',
-    };
-    return translations[status] || status;
-  },
-
-  formatUptime(seconds: number): string {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}min`;
-    return `${Math.floor(seconds / 86400)}d ${Math.floor((seconds % 86400) / 3600)}h`;
   }
 };
