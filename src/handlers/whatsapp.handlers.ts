@@ -12,7 +12,6 @@ import { createLogger } from '../utils/logger.utils';
 dotenv.config();
 
 interface IWhatsAppHandlers {
-
   update: ConnectionUpdate,
   reconnectCallback: () => void,
 }

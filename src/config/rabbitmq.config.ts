@@ -7,7 +7,9 @@ const RABBITMQ_CONFIG = {
   maxRetries: parseInt(process.env.RABBITMQ_MAX_RETRIES || '5'),
   queues: {
     TO_WHATSAPP: process.env.TO_WHATSAPP_QUEUE || '-',
-    FROM_WHATSAPP: process.env.FROM_WHATSAPP_QUEUE || '-'
+    FROM_WHATSAPP: process.env.FROM_WHATSAPP_QUEUE || '-',
+    VIDEO_PROCESSING: 'video-processing',
+    VIDEO_DLQ: 'video-processing-dlq'
   }
 } as const;
 
