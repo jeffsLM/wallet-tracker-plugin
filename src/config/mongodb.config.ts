@@ -1,6 +1,5 @@
 /**
  * Configuração do MongoDB
- * Reutiliza a mesma conexão para transações e vídeos
  */
 
 import dotenv from 'dotenv';
@@ -13,8 +12,5 @@ export const MONGODB_CONFIG = {
     minPoolSize: 2,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
-  },
-  collections: {
-    VIDEOS: 'video_messages',
   }
 } as const;

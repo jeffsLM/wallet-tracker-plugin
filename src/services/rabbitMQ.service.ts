@@ -2,7 +2,6 @@ import amqp from 'amqplib';
 import { QUEUE_CONFIG, RABBITMQ_CONFIG } from '../config/rabbitmq.config';
 import { createLogger } from '../utils/logger.utils';
 import { ConnectionUpdate } from '../types';
-import { VideoQueueMessage } from '../types/video.types';  // 🆕 NOVO
 
 
 
@@ -61,24 +60,12 @@ async function createConnection(): Promise<RabbitMQConnection> {
 
   await channel.prefetch(QUEUE_CONFIG.prefetch || 1);
 
-  // ✅ MANTÉM: Filas de transações
+  // Filas de transações
   await channel.assertQueue(RABBITMQ_CONFIG.queues.TO_WHATSAPP, {
     durable: QUEUE_CONFIG.durable
   });
   await channel.assertQueue(RABBITMQ_CONFIG.queues.FROM_WHATSAPP, {
     durable: QUEUE_CONFIG.durable
-  });
-
-  // 🆕 NOVO: Filas de vídeos com Dead Letter Queue
-  await channel.assertQueue(RABBITMQ_CONFIG.queues.VIDEO_DLQ, {
-    durable: QUEUE_CONFIG.durable
-  });
-  
-  await channel.assertQueue(RABBITMQ_CONFIG.queues.VIDEO_PROCESSING, {
-    durable: QUEUE_CONFIG.durable,
-    deadLetterExchange: '',
-    deadLetterRoutingKey: RABBITMQ_CONFIG.queues.VIDEO_DLQ,
-    messageTtl: 604800000 // 7 dias
   });
 
   // Configurar listeners para reconexão
@@ -340,62 +327,3 @@ export async function closeConnection(): Promise<void> {
     }
   }
 }
-
-// 🆕 NOVO: Métodos para fila de vídeos (isolados)
-
-/**
- * Publica mensagem de vídeo na fila video-processing
- */
-export async function publishVideoMessage(message: VideoQueueMessage): Promise<void> {
-  try {
-    const { channel } = await getLazyConnection();
-    const messageJson = JSON.stringify(message);
-    const messageBuffer = Buffer.from(messageJson);
-
-    const success = channel.sendToQueue(
-      RABBITMQ_CONFIG.queues.VIDEO_PROCESSING,
-      messageBuffer,
-      { persistent: QUEUE_CONFIG.persistent }
-    );
-
-    if (!success) {
-      throw new Error('Falha ao enviar mensagem de vídeo para a fila');
-    }
-
-    logger.info(`📤 Vídeo enviado para ${RABBITMQ_CONFIG.queues.VIDEO_PROCESSING}: ${message.messageId}`);
-
-  } catch (error) {
-    logger.error('Erro ao publicar mensagem de vídeo:', error);
-    throw error;
-  }
-}
-
-/**
- * Obtém status das filas (incluindo fila de vídeos)
- */
-export async function getQueueStatusExtended(): Promise<{
-  toWhatsApp: amqp.Replies.AssertQueue;
-  fromWhatsApp: amqp.Replies.AssertQueue;
-  videoProcessing: amqp.Replies.AssertQueue;
-  videoDLQ: amqp.Replies.AssertQueue;
-}> {
-  try {
-    const { channel } = await getLazyConnection();
-
-    const toWhatsAppStatus = await channel.checkQueue(RABBITMQ_CONFIG.queues.TO_WHATSAPP);
-    const fromWhatsAppStatus = await channel.checkQueue(RABBITMQ_CONFIG.queues.FROM_WHATSAPP);
-    const videoProcessingStatus = await channel.checkQueue(RABBITMQ_CONFIG.queues.VIDEO_PROCESSING);
-    const videoDLQStatus = await channel.checkQueue(RABBITMQ_CONFIG.queues.VIDEO_DLQ);
-
-    return {
-      toWhatsApp: toWhatsAppStatus,
-      fromWhatsApp: fromWhatsAppStatus,
-      videoProcessing: videoProcessingStatus,
-      videoDLQ: videoDLQStatus
-    };
-  } catch (error) {
-    logger.error('Erro ao verificar status das filas:', error);
-    throw error;
-  }
-}
-
