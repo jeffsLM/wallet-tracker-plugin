@@ -227,8 +227,17 @@ export async function connectToWhatsApp(): Promise<WhatsappSocket> {
     });
 
     sock.ev.on('creds.update', saveCreds);
+    
+    // Log para confirmar que o handler foi registrado
+    createLogger('info').info('📱 Handler de mensagens registrado com sucesso');
+    
     sock.ev.on('messages.upsert', async (messages) => {
-      await handleMessagesUpsert({ sock, ...messages });
+      try {
+        createLogger('info').info(`🔔 Evento messages.upsert recebido! Total de mensagens: ${messages.messages?.length || 0}`);
+        await handleMessagesUpsert({ sock, ...messages });
+      } catch (error) {
+        createLogger('error').error('❌ Erro ao processar mensagem:', error);
+      }
     });
 
     isConnecting = false;

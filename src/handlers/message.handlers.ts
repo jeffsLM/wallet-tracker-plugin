@@ -38,45 +38,51 @@ function isDuplicateMessage(messageId: string): boolean {
 }
 
 export async function handleMessagesUpsert({ messages, sock }: MessagesUpsert): Promise<void> {
-  for (const msg of messages) {
-    const remoteJid = msg.key.remoteJid;
+  try {
+    logger.info(`🔥 handleMessagesUpsert chamado com ${messages.length} mensagem(ns)`);
+    
+    for (const msg of messages) {
+      const remoteJid = msg.key.remoteJid;
 
-    logger.info(`📨 Mensagem recebida de: ${remoteJid}`);
-    logger.info(`🎯 TARGET_GROUP_ID: ${TARGET_GROUP_ID}`);
+      logger.info(`📨 Mensagem recebida de: ${remoteJid}`);
+      logger.info(`🎯 TARGET_GROUP_ID: ${TARGET_GROUP_ID}`);
 
-    if (!msg.message) {
-      logger.info('⚠️ Mensagem sem conteúdo, ignorando');
-      continue;
-    }
-
-    const messageId = `${remoteJid}_${msg.key.id}`;
-    if (isDuplicateMessage(messageId)) {
-      continue;
-    }
-
-    // === CANAL DE TRANSAÇÕES (TARGET_GROUP_ID) ===
-    if (isAllowedGroup(remoteJid)) {
-      logger.info(`💰 Mensagem do canal de TRANSAÇÕES`);
-
-      // Imagens (transações)
-      if (msg.message.imageMessage) {
-        logger.info(`🖼️ Processando imagem...`);
-        await imageMessageHandler.handle({ msg, sock });
+      if (!msg.message) {
+        logger.info('⚠️ Mensagem sem conteúdo, ignorando');
         continue;
       }
 
-      // Texto (comandos de transações)
-      if (msg.message.conversation || msg.message.extendedTextMessage) {
-        logger.info(`💬 Processando comando de transação...`);
-        await textMessageHandler.handle({ msg, sock });
+      const messageId = `${remoteJid}_${msg.key.id}`;
+      if (isDuplicateMessage(messageId)) {
         continue;
       }
 
-      logger.info(`⚠️ Tipo de mensagem não suportado no canal de transações`);
-      continue;
-    }
+      // === CANAL DE TRANSAÇÕES (TARGET_GROUP_ID) ===
+      if (isAllowedGroup(remoteJid)) {
+        logger.info(`💰 Mensagem do canal de TRANSAÇÕES`);
 
-    // === GRUPO NÃO AUTORIZADO ===
-    logger.info(`🚫 Grupo não autorizado - ignorando: ${remoteJid}`);
+        // Imagens (transações)
+        if (msg.message.imageMessage) {
+          logger.info(`🖼️ Processando imagem...`);
+          await imageMessageHandler.handle({ msg, sock });
+          continue;
+        }
+
+        // Texto (comandos de transações)
+        if (msg.message.conversation || msg.message.extendedTextMessage) {
+          logger.info(`💬 Processando comando de transação...`);
+          await textMessageHandler.handle({ msg, sock });
+          continue;
+        }
+
+        logger.info(`⚠️ Tipo de mensagem não suportado no canal de transações`);
+        continue;
+      }
+
+      // === GRUPO NÃO AUTORIZADO ===
+      logger.info(`🚫 Grupo não autorizado - ignorando: ${remoteJid}`);
+    }
+  } catch (error) {
+    logger.error('❌ ERRO CRÍTICO em handleMessagesUpsert:', error);
   }
 }
