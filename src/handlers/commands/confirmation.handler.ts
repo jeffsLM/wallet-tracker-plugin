@@ -13,7 +13,7 @@ export const confirmationHandler = {
 
       if (!pendingCard) {
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createNoPendingCardMessage(),
           ...(msg.message ? { quoted: msg.message } : {})
         });
@@ -25,7 +25,7 @@ export const confirmationHandler = {
       if (result.success) {
         // Envia mensagem de confirmação do comprovante
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createConfirmedCardMessage(result.card!),
           ...(msg.message ? { quoted: msg.message } : {})
         });
@@ -37,14 +37,14 @@ export const confirmationHandler = {
         if (pendingMessage) {
           createLogger('📤').info('Enviando mensagem pendente do queue...');
           await whatsappMessage.sendText(sock, {
-            jid: msg.key.remoteJid || '',
+            jid: msg?.key?.remoteJid || '',
             text: pendingMessage
           });
           createLogger('info').info('Mensagem do queue enviada com sucesso!');
         }
       } else {
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createErrorMessage('ERRO AO CONFIRMAR', result.error, 'Tente novamente ou entre em contato com o suporte.'),
           ...(msg.message ? { quoted: msg.message } : {})
         });
@@ -52,7 +52,7 @@ export const confirmationHandler = {
     } catch (error) {
       createLogger('error').error('Erro ao confirmar comprovante:', error);
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: messageFormatter.createErrorMessage('ERRO INTERNO', 'Falha ao confirmar comprovante.', 'Tente novamente em alguns instantes.'),
         ...(msg.message ? { quoted: msg.message } : {})
       });

@@ -11,7 +11,7 @@ export const cancelHandler = {
 
       if (!pendingCard) {
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createNoPendingCardMessage(),
           ...(msg.message ? { quoted: msg.message } : {})
         });
@@ -22,13 +22,13 @@ export const cancelHandler = {
 
       if (result.success) {
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createCancelledCardMessage(result.card!.id),
           ...(msg.message ? { quoted: msg.message } : {})
         });
       } else {
         await whatsappMessage.sendText(sock, {
-          jid: msg.key.remoteJid || '',
+          jid: msg?.key?.remoteJid || '',
           text: messageFormatter.createErrorMessage('ERRO AO CANCELAR', result.error, 'Tente novamente ou entre em contato com o suporte.'),
           ...(msg.message ? { quoted: msg.message } : {})
         });

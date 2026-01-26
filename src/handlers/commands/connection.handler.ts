@@ -13,14 +13,14 @@ export const connectionHandler = {
       const statusText = this.formatConnectionStatus(stats, health);
 
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: statusText,
         ...(msg.message ? { quoted: msg.message } : {})
       });
     } catch (error) {
       createLogger('error').error('Erro ao consultar estatísticas de conexão:', error);
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: '❌ Erro ao obter estatísticas de conexão.',
         ...(msg.message ? { quoted: msg.message } : {})
       });

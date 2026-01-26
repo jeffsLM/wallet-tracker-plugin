@@ -13,7 +13,7 @@ export const statusHandler = {
       const statusText = messageFormatter.createStatusMessage(stats, pendingCard);
 
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: statusText,
         ...(msg.message ? { quoted: msg.message } : {})
       });

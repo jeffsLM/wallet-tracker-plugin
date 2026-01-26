@@ -4,7 +4,6 @@ import { confirmationHandler } from './commands/confirmation.handler';
 import { editHandler } from './commands/edit.handler';
 import { cancelHandler } from './commands/cancel.handler';
 import { statusHandler } from './commands/status.handler';
-import { connectionHandler } from './commands/connection.handler';
 
 
 interface TextMessageRequest {
@@ -15,7 +14,7 @@ interface TextMessageRequest {
 export const textMessageHandler = {
   async handle({ msg, sock }: TextMessageRequest): Promise<void> {
     const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text || '';
-    const senderJid = msg.key.participant || msg.key.remoteJid || '';
+    const senderJid = msg?.key?.participant || msg?.key?.remoteJid || '';
     const lowerText = text.toLowerCase().trim();
 
     // Route to appropriate command handler
@@ -36,11 +35,6 @@ export const textMessageHandler = {
 
     if (lowerText.startsWith('status') || lowerText.startsWith('meus cartoes')) {
       await statusHandler.handle(senderJid, sock, msg);
-      return;
-    }
-
-    if (lowerText.startsWith('conexao') || lowerText.startsWith('conexão') || lowerText.startsWith('connection')) {
-      await connectionHandler.handle(senderJid, sock, msg);
       return;
     }
   }

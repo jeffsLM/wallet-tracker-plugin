@@ -19,8 +19,8 @@ export const imageMessageHandler = {
     try {
       createLogger('info').info('📨 Nova imagem recebida do grupo alvo');
 
-      const senderJid = msg.key.participant || msg.key.remoteJid || '';
-      const senderName = await userUtils.getSenderName(sock, senderJid, msg.key.remoteJid || '');
+      const senderJid = msg?.key?.participant || msg?.key?.remoteJid || '';
+      const senderName = await userUtils.getSenderName(sock, senderJid, msg?.key?.remoteJid || '');
 
       // Check if user already has a pending card
       if (await this.checkExistingPendingCard(senderJid)) {
@@ -33,7 +33,7 @@ export const imageMessageHandler = {
     } catch (error) {
       createLogger('error').error('Erro ao processar imagem:', error);
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: messageFormatter.createErrorMessage('ERRO INTERNO', 'Falha ao processar a imagem.', 'Tente novamente em alguns instantes.\n🆘 Se o problema persistir, entre em contato com o suporte.'),
         ...(msg.message ? { quoted: msg.message } : {})
       });
@@ -60,16 +60,16 @@ export const imageMessageHandler = {
   ): Promise<void> {
     // Send processing message
     await whatsappMessage.sendText(sock, {
-      jid: msg.key.remoteJid || '',
+      jid: msg?.key?.remoteJid || '',
       text: `🔄 *PROCESSANDO IMAGEM*...`,
       ...(msg.message ? { quoted: msg.message } : {})
     });
 
     // Download image
-    const downloadResult = await imageDownloadService.downloadAndSaveImage(msg);
+    const downloadResult = await imageDownloadService.downloadAndSaveImage({ key: msg.key as proto.IMessageKey, messageStubParameters: msg.messageStubParameters });
     if (!downloadResult.success || !downloadResult.filePath) {
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: messageFormatter.createErrorMessage('ERRO NO DOWNLOAD', downloadResult.error, 'Tente enviar a imagem novamente.'),
         ...(msg.message ? { quoted: msg.message } : {})
       });
@@ -80,7 +80,7 @@ export const imageMessageHandler = {
     const ocrResult = await ocrService.processImage(downloadResult.filePath);
     if (!ocrResult.success || !ocrResult.text) {
       await whatsappMessage.sendText(sock, {
-        jid: msg.key.remoteJid || '',
+        jid: msg?.key?.remoteJid || '',
         text: messageFormatter.createOcrErrorMessage(ocrResult.error),
         ...(msg.message ? { quoted: msg.message } : {})
       });
@@ -97,19 +97,19 @@ export const imageMessageHandler = {
       user: senderName,
       ocrText: ocrResult.text,
       senderJid,
-      groupJid: msg.key.remoteJid || '',
+      groupJid: msg?.key?.remoteJid || '',
       filePath: downloadResult.filePath,
       payer: 'Família'
     });
 
     if (!result.success) await whatsappMessage.sendText(sock, {
-      jid: msg.key.remoteJid || '',
+      jid: msg?.key?.remoteJid || '',
       text: messageFormatter.createErrorMessage('ERRO AO CRIAR COMPROVANTE', result.error, 'Tente processar a imagem novamente.'),
       ...(msg.message ? { quoted: msg.message } : {})
     });
 
     await whatsappMessage.sendText(sock, {
-      jid: msg.key.remoteJid || '',
+      jid: msg?.key?.remoteJid || '',
       text: messageFormatter.createProcessedCardMessage(result.card),
       ...(msg.message ? { quoted: msg.message } : {})
     });
