@@ -55,8 +55,41 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
   try {
     createLogger('info').info('📥 Iniciando download da imagem...');
 
+    // Log detalhado da mensagem recebida
+    createLogger('info').info('🔍 ========== DADOS COMPLETOS DA MENSAGEM ==========');
+    createLogger('info').info('📋 Message Key:');
+    createLogger('info').info(JSON.stringify(msg.key, null, 2));
+
+    createLogger('info').info('📸 Image Message COMPLETO (para debug/download manual):');
+    createLogger('info').info(JSON.stringify(msg.message, null, 2));
+
+    createLogger('info').info('🔐 Dados de criptografia e download:');
+    if (msg.message?.imageMessage) {
+      const img = msg.message.imageMessage;
+      createLogger('info').info(JSON.stringify({
+        url: img.url,
+        directPath: img.directPath,
+        mediaKey: img.mediaKey ? Buffer.from(img.mediaKey).toString('base64') : null,
+        fileEncSha256: img.fileEncSha256 ? Buffer.from(img.fileEncSha256).toString('base64') : null,
+        fileSha256: img.fileSha256 ? Buffer.from(img.fileSha256).toString('base64') : null,
+        jpegThumbnail: img.jpegThumbnail ? `<Buffer ${img.jpegThumbnail.length} bytes>` : null,
+        fileLength: img.fileLength,
+        mimetype: img.mimetype,
+        caption: img.caption,
+        width: img.width,
+        height: img.height,
+        scanLengths: img.scanLengths,
+        scansSidecar: img.scansSidecar ? `<Buffer ${img.scansSidecar.length} bytes>` : null,
+        midQualityFileSha256: img.midQualityFileSha256 ? Buffer.from(img.midQualityFileSha256).toString('base64') : null,
+        contextInfo: img.contextInfo
+      }, null, 2));
+    }
+
+    createLogger('info').info('🔍 =================================================');
+
     // Verifica se há mensagem de imagem
     if (!msg.message?.imageMessage) {
+      createLogger('error').error('❌ Mensagem não contém imageMessage');
       return {
         success: false,
         error: 'Mensagem não contém imagem'
@@ -64,13 +97,18 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
     }
 
     // Download do buffer da imagem
+    createLogger('info').info('⏳ Chamando downloadMediaMessage...');
+
     const buffer = await downloadMediaMessage(
       msg,
       'buffer',
       {}
     ) as Buffer;
 
+    createLogger('info').info(`✅ downloadMediaMessage concluído. Buffer recebido: ${buffer ? 'SIM' : 'NÃO'}`);
+
     if (!buffer || buffer.length === 0) {
+      createLogger('error').error('❌ Buffer vazio ou nulo');
       return {
         success: false,
         error: 'Nenhum dado de imagem encontrado na mensagem'
@@ -101,7 +139,13 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    createLogger('error').error('❌ Erro no download da imagem:', error);
+
+    createLogger('error').error('❌ Erro no download da imagem:', errorMessage);
+    createLogger('error').error('🔍 Detalhes do erro:', JSON.stringify({
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: errorMessage,
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    }, null, 2));
 
     return {
       success: false,
