@@ -55,10 +55,22 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
   try {
     createLogger('info').info('📥 Iniciando download da imagem...');
 
-    // Download do buffer da imagem
-    const buffer = await downloadMediaMessage(msg, 'buffer', {});
+    // Verifica se há mensagem de imagem
+    if (!msg.message?.imageMessage) {
+      return {
+        success: false,
+        error: 'Mensagem não contém imagem'
+      };
+    }
 
-    if (!buffer) {
+    // Download do buffer da imagem
+    const buffer = await downloadMediaMessage(
+      msg,
+      'buffer',
+      {}
+    ) as Buffer;
+
+    if (!buffer || buffer.length === 0) {
       return {
         success: false,
         error: 'Nenhum dado de imagem encontrado na mensagem'
@@ -67,7 +79,7 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
 
     createLogger('info').info(`📊 Buffer original: ${(buffer.length / 1024).toFixed(1)} KB`);
 
-    const mimeType = msg.message?.imageMessage?.mimetype || 'image/jpeg';
+    const mimeType = msg.message.imageMessage.mimetype || 'image/jpeg';
     const fileName = generateFileName(mimeType);
 
     const destinationFolder = ensureDestinationFolder();
@@ -79,6 +91,8 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
 
     const fileSizeKB = compressedBuffer.length / 1024;
 
+    createLogger('info').info(`✅ Imagem salva: ${fileName} (${fileSizeKB.toFixed(1)} KB)`);
+
     return {
       success: true,
       filePath: fullPath,
@@ -87,7 +101,7 @@ export async function downloadAndSaveImage(msg: WAMessage): Promise<DownloadResu
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    createLogger('error').error('❌ Erro no download da imagem:', errorMessage);
+    createLogger('error').error('❌ Erro no download da imagem:', error);
 
     return {
       success: false,
@@ -101,7 +115,7 @@ export async function cleanupOldImages(maxAgeHours: number = 24): Promise<void> 
     const destinationFolder = ensureDestinationFolder();
     const files = fs.readdirSync(destinationFolder);
     const now = Date.now();
-    const maxAge = maxAgeHours * 60 * 60 * 1000; // convertendo para milliseconds
+    const maxAge = maxAgeHours * 60 * 60 * 1000;
 
     let deletedCount = 0;
 
