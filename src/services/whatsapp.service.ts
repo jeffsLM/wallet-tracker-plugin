@@ -130,12 +130,13 @@ async function scheduleReconnect(reason: string, statusCode?: number): Promise<v
 export async function connectToWhatsApp(): Promise<WhatsappSocket> {
   try {
     const { state, saveCreds } = await useMultiFileAuthState(WHATSAPP_CONFIG.authStatePath);
-    // const { version, isLatest } = await baileys.fetchLatestWaWebVersion({});
+    const { version, isLatest } = await baileys.fetchLatestWaWebVersion({});
+
 
     const sock: WhatsappSocket = makeWASocket({
       logger: P({ level: WHATSAPP_CONFIG.loggerLevel }),
       auth: state,
-      version: [2, 3000, 1027934701],
+      version: version,
       printQRInTerminal: false,
       connectTimeoutMs: 60000,
       browser: WHATSAPP_CONFIG.browser,
